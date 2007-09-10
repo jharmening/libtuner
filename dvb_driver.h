@@ -3,20 +3,23 @@
 
 #include "tuner_driver.h"
 
-typedef enum
+enum dvb_modulation_t
 {
-   DVB_MOD_NONE        = (1 << 0),
-   DVB_MOD_VSB_8       = (1 << 1),
-   DVB_MOD_VSB_16      = (1 << 2),
-   DVB_MOD_QAM_16      = (1 << 3),
-   DVB_MOD_QAM_32      = (1 << 4),
-   DVB_MOD_QAM_64      = (1 << 5),
-   DVB_MOD_QAM_128     = (1 << 6),
-   DVB_MOD_QAM_256     = (1 << 7),
-   DVB_MOD_QAM_AUTO    = (1 << 8),
-   DVB_MOD_QPSK        = (1 << 9),
-   DVB_MOD_OFDM        = (1 << 10)
-} dvb_modulation_t;
+   DVB_MOD_VSB_8,
+   DVB_MOD_VSB_16,
+   DVB_MOD_QAM_16,
+   DVB_MOD_QAM_32,
+   DVB_MOD_QAM_64,
+   DVB_MOD_QAM_128,
+   DVB_MOD_QAM_256,
+   DVB_MOD_QAM_AUTO,
+   DVB_MOD_QPSK,
+   DVB_MOD_OFDM,
+   DVB_MODS
+};
+
+#define DVB_MOD_NONE DVB_MODS
+#define DVB_MOD_CAPABILITY(modulation) (1 << modulation)
 
 enum dvb_clock_t
 {

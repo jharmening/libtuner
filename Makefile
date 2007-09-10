@@ -1,14 +1,18 @@
 CXXFLAGS = -Wall -fPIC
-all: base dtt7612 or51132
+
+.if defined(DIAGNOSTIC)
+CXXFLAGS+= -D_DIAGNOSTIC
+.endif
+
+BASE = pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o
+
+all: dtt7612 or51132.o
 	g++ -o libtuner.so -Wall -fPIC -shared *.o
 
-dtt7612: dtt7612.h
-or51132: or51132.o
-or51132.o: or51132.h or51132.cpp
-base: pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o
-pll_driver.o: dvb_driver pll_driver.h pll_driver.cpp
-dvb_driver: tuner_driver dvb_driver.h
-tuner_driver: tuner_driver.h
+dtt7612: $(BASE) dtt7612.h
+or51132.o: $(BASE) or51132.h or51132.cpp
+
+pll_driver.o: tuner_driver.h dvb_driver.h pll_driver.h pll_driver.cpp
 tuner_device.o: tuner_device.h tuner_devnode_device.h tuner_devnode_device.cpp
 tuner_firmware.o: tuner_firmware.h tuner_firmware.cpp
 tuner_config.o: tuner_config.h tuner_config.cpp

@@ -45,10 +45,10 @@ int or51132::load_firmware(const char *filename, bool force)
    tuner_firmware fw(filename, error);
    if (error || (!force && fw.up_to_date ()))
    {
-      printf("OR51132: NOT updating firmware\n");
+      DIAGNOSTIC(printf("OR51132: NOT updating firmware\n"))
       return error;
    }
-   printf("OR51132: Updating firmware\n");
+   DIAGNOSTIC(printf("OR51132: Updating firmware\n"))
    uint32_t size_a = le32toh(*((uint32_t*)(fw.buffer())));
    uint32_t size_b = le32toh(*(((uint32_t*)(fw.buffer())) + 1));
    uint8_t *fw_bytes = (uint8_t*)(fw.buffer());
@@ -105,8 +105,8 @@ int or51132::load_firmware(const char *filename, bool force)
    }
    if (!error)
    {
-      printf("OR51132 Firmware revision %02X%02X%02X%02X-%02X%02X%02X%02X\n",
-         buffer[1], buffer[0], buffer[3], buffer[2], buffer[5], buffer[4], buffer[7], buffer[6]);
+      DIAGNOSTIC(printf("OR51132 Firmware revision %02X%02X%02X%02X-%02X%02X%02X%02X\n",
+         buffer[1], buffer[0], buffer[3], buffer[2], buffer[5], buffer[4], buffer[7], buffer[6]))
       usleep(20000);
       buffer[0] = 0x10;
       buffer[1] = 0x00;
@@ -181,21 +181,21 @@ int or51132::get_signal(dvb_signal &signal)
    switch (status[0])
    {
       case OR51132_MODE_VSB:
-         printf("OR51132: getting VSB signal\n");
+         DIAGNOSTIC(printf("OR51132: getting VSB signal\n"))
          if (status[1] & 0x10)
          {
             ntsc_correction = 3;
          }
       case OR51132_MODE_QAM64:
-         printf("OR51132: getting QAM64 signal\n");
+         DIAGNOSTIC(printf("OR51132: getting QAM64 signal\n"))
          snr_const = 897152044.8282;
          break;
       case OR51132_MODE_QAM256:
-         printf("OR51132: getting QAM256 signal\n");
+         DIAGNOSTIC(printf("OR51132: getting QAM256 signal\n"))
          snr_const = 907832426.314266;
          break;
       default:
-         printf("OR51132: Unrecognized modulation status\n");
+         DIAGNOSTIC(printf("OR51132: Unrecognized modulation status\n"))
          return ENXIO;
    }
    if ((error = m_device.write(buffer, sizeof(buffer))))

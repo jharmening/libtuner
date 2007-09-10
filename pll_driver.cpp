@@ -53,7 +53,6 @@ int pll_driver::start(uint32_t timeout_ms)
       {
          usleep(50000);
          error = m_device.read(&status, sizeof(status));
-         printf("pll_driver: read 0x%x\n", status);
          if (error)
          {
             break;
@@ -72,7 +71,7 @@ int pll_driver::start(uint32_t timeout_ms)
       }
       else
       {
-         printf("PLL has lock\n");
+         DIAGNOSTIC(printf("PLL has lock\n"))
          m_state = DVB_PLL_LOCKED;
       }
    }
