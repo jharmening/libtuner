@@ -35,8 +35,8 @@ enum dvb_polarity_t
 
 enum dvb_endianness_t
 {
-   DVB_IFC_BIT_LE,
-   DVB_IFC_BIT_BE
+   DVB_IFC_BIT_BE,
+   DVB_IFC_BIT_LE
 };
 
 typedef struct

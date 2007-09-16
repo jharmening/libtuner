@@ -123,7 +123,7 @@ int or51132::load_firmware(const char *filename, bool force)
 int or51132::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
    int error = 0;
-   interface.bit_endianness = DVB_IFC_BIT_LE;
+   interface.bit_endianness = DVB_IFC_BIT_BE;
    interface.polarity = DVB_IFC_NEG_POL;
    interface.input_width_bits = 8;
    uint8_t old_mode = m_mode;
