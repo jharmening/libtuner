@@ -14,8 +14,7 @@ enum dvb_modulation_t
    DVB_MOD_QAM_256,
    DVB_MOD_QAM_AUTO,
    DVB_MOD_QPSK,
-   DVB_MOD_OFDM,
-   DVB_MODS
+   DVB_MOD_OFDM
 };
 
 #define DVB_MOD_NONE DVB_MODS
