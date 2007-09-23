@@ -88,6 +88,7 @@ numtype tuner_config::get_number(const char *key)
    try
    {
       string strkey(key);
+      transform(strkey.begin(), strkey.end(), strkey.begin(), (int(*)(int))std::tolower);
       strmap::iterator it = entries.find(strkey);
       if (it == entries.end())
       {
