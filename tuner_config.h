@@ -1,6 +1,17 @@
 #ifndef __TUNER_CONFIG_H__
 #define __TUNER_CONFIG_H__
 
+#ifdef _DIAGNOSTIC
+#define DIAGNOSTIC(stmt) stmt;
+#else
+#define DIAGNOSTIC(stmt)
+#endif
+
+#define LIBTUNERERR (cerr << "[libtuner] ")
+#define LIBTUNERLOG (clog << "[libtuner] ")
+
+#include <iostream>
+#include <iomanip>
 #include <string>
 #include <map>
 using namespace std;

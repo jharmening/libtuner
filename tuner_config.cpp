@@ -39,7 +39,7 @@ int tuner_config::load_file(const char *filename)
          token_end = line.find_first_of(DELIMS, token_begin);
          if (token_end == string::npos)
          {
-            cout << filename << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
+            LIBTUNERERR << filename << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
             continue;
          }
          string ident = line.substr(token_begin, token_end - token_begin);
@@ -47,7 +47,7 @@ int tuner_config::load_file(const char *filename)
          token_begin = line.find_first_not_of(DELIMS, token_end);
          if (token_begin == string::npos)
          {
-            cout << filename << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
+            LIBTUNERERR << filename << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
             continue;
          }
          token_end = line.find_last_not_of(WHITESPACE) + 1;

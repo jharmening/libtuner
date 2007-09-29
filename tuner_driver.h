@@ -1,12 +1,6 @@
 #ifndef __TUNER_DRIVER_H__
 #define __TUNER_DRIVER_H__
 
-#ifdef _DIAGNOSTIC
-#define DIAGNOSTIC(stmt) stmt;
-#else
-#define DIAGNOSTIC(stmt)
-#endif
-
 #include <sys/types.h>
 #include "tuner_config.h"
 #include "tuner_device.h"

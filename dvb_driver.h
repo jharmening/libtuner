@@ -17,9 +17,6 @@ enum dvb_modulation_t
    DVB_MOD_OFDM
 };
 
-#define DVB_MOD_NONE DVB_MODS
-#define DVB_MOD_CAPABILITY(modulation) (1 << modulation)
-
 enum dvb_clock_t
 {
    DVB_IFC_NORM_CLCK,

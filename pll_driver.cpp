@@ -66,12 +66,12 @@ int pll_driver::start(uint32_t timeout_ms)
       } while (time_slept < timeout_ms);
       if (!locked)
       {
-         printf("PLL timed out waiting for lock\n");
+         LIBTUNERERR << "PLL timed out waiting for lock" << endl;
          error = ETIMEDOUT;
       }
       else
       {
-         DIAGNOSTIC(printf("PLL has lock\n"))
+         DIAGNOSTIC(LIBTUNERLOG << "PLL has lock" << endl)
          m_state = DVB_PLL_LOCKED;
       }
    }
