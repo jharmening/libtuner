@@ -28,31 +28,44 @@
 #include <sys/errno.h>
 #include "pll_driver.h"
 
+pll_driver::pll_driver(
+   tuner_config &config,
+   tuner_device &device,
+   uint32_t intermediate_frequency,
+   const frequency_band *bands,
+   size_t num_bands)
+   : dvb_driver(config, device),
+     m_state(DVB_PLL_UNCONFIGURED),
+     m_frequency_hz(0),
+     m_intermediate_frequency(intermediate_frequency),
+     m_bands(bands),
+     m_num_bands(num_bands)
+{
+}
+
 int pll_driver::set_frequency(uint32_t frequency_hz)
-{   
-   size_t range_size;
-   const frequency_range *ranges;
+{
    if ((m_state > DVB_PLL_UNCONFIGURED) && (frequency_hz == m_frequency_hz))
    {
       return 0;
    }
-   get_ranges(ranges, range_size);
-   if ((frequency_hz < get_min_frequency()) ||
-      (frequency_hz > ranges[range_size - 1].max_frequency))
+   size_t i;
+   for (i = 0; i < m_num_bands; ++i)
    {
-      return EINVAL;
-   }
-   for (size_t i = 0; i < range_size; ++i)
-   {
-      if (ranges[i].max_frequency >= frequency_hz)
+      if ((m_bands[i].min_frequency <= frequency_hz) && (m_bands[i].max_frequency >= frequency_hz))
       {
-         uint32_t divider = (ranges[i].intermediate_frequency + frequency_hz) / ranges[i].step_size;
+         uint32_t divider = (m_intermediate_frequency + frequency_hz) / m_bands[i].step_frequency;
          m_buffer[0] = (uint8_t)(divider >> 8);
          m_buffer[1] = (uint8_t)(divider & 0xFF);
-         m_buffer[2] = ranges[i].control_byte;
-         m_buffer[3] = ranges[i].bandswitch_byte;
+         m_buffer[2] = m_bands[i].control_byte;
+         m_buffer[3] = m_bands[i].bandswitch_byte;
+         m_buffer[4] = m_bands[i].aux_byte;
          break;
       }
+   }
+   if (i == m_num_bands)
+   {
+      return EINVAL;  
    }
    m_frequency_hz = frequency_hz;
    m_state = DVB_PLL_CONFIGURED;
@@ -70,7 +83,18 @@ int pll_driver::start(uint32_t timeout_ms)
    {
       return ENXIO;
    }
-   int error = m_device.write(m_buffer, sizeof(m_buffer));
+   int error = 0;
+   if (m_buffer[4] != DVB_PLL_IGNORE_AUX)
+   {
+      uint8_t aux_buffer[2];
+      aux_buffer[0] = m_buffer[2] | 0x18;
+      aux_buffer[1] = m_buffer[4];
+      if ((error = m_device.write(aux_buffer, 2)))
+      {
+         return error;
+      }   
+   }
+   error = m_device.write(m_buffer, 4);
    if (!error)
    {
       uint32_t time_slept = 0;
@@ -109,10 +133,10 @@ void pll_driver::stop(void)
 {
    if (m_state != DVB_PLL_UNCONFIGURED)
    {
-      uint8_t old_cb = m_buffer[2];
-      m_buffer[2] |= 0x01;
-      m_device.write(m_buffer, sizeof(m_buffer));
-      m_buffer[2] = old_cb;
+      uint8_t stop_buffer[2];
+      stop_buffer[0] = m_buffer[2] | 0x01;
+      stop_buffer[1] = m_buffer[3];
+      m_device.write(stop_buffer, 2);
       m_state = DVB_PLL_CONFIGURED;
    }
 }

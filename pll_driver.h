@@ -30,18 +30,30 @@
 
 #include "dvb_driver.h"
 
+#define DVB_PLL_IGNORE_AUX 0xFF
+
+typedef struct
+{
+   uint32_t min_frequency;
+   uint32_t max_frequency;
+   uint32_t step_frequency;
+   uint8_t control_byte;
+   uint8_t bandswitch_byte;
+   uint8_t aux_byte;
+} frequency_band;
+
 class pll_driver
    : public dvb_driver
 {
    public:
 
-      pll_driver(tuner_config &config, tuner_device &device)
-         : dvb_driver(config, device),
-           m_state(DVB_PLL_UNCONFIGURED)
-      {
-         m_frequency_hz = 0;
-      }
-
+      pll_driver(
+         tuner_config &config,
+         tuner_device &device,
+         uint32_t intermediate_frequency,
+         const frequency_band *bands,
+         size_t num_bands);
+      
       virtual ~pll_driver(void)
       {
          stop();
@@ -55,21 +67,6 @@ class pll_driver
 
       virtual void reset(void);
 
-   protected:
-
-      typedef struct
-      {
-         uint32_t max_frequency;
-         uint32_t intermediate_frequency;
-         uint32_t step_size;
-         uint8_t control_byte;
-         uint8_t bandswitch_byte;
-      } frequency_range;
-
-      virtual void get_ranges(const frequency_range *&ranges, size_t &num_elements) = 0;
-
-      virtual uint32_t get_min_frequency(void) = 0;
-
    private:
 
       enum
@@ -79,8 +76,12 @@ class pll_driver
          DVB_PLL_LOCKED
       } m_state;
 
-      uint8_t m_buffer[4];
+      uint8_t m_buffer[5];
       uint32_t m_frequency_hz;
+      
+      uint32_t m_intermediate_frequency;
+      const frequency_band *m_bands;
+      size_t m_num_bands;
 
       int set_frequency(uint32_t frequency_hz);
 };
