@@ -25,35 +25,31 @@
  *
  */
 
-#ifndef __LGH064F_H__
-#define __LGH064F_H__
+#ifndef __LG3303_H__
+#define __LG3303_H__
 
-#include "pll_driver.h"
+#include "dvb_driver.h"
 
-class lgh064f
-   : public pll_driver
+class lg3303
+   : public dvb_driver
 {
-   
    public:
       
-      lgh064f(tuner_config &config, tuner_device &device)
-         : pll_driver(config, device, 44000000,
-              lgh064f_bands, (sizeof(lgh064f_bands) / sizeof(frequency_band)))
-      {}
+      lg3303(tuner_config &config, tuner_device &device, dvb_polarity_t clock_polarity, dvb_input_t input, int &error);
       
-      virtual ~lgh064f(void) {}
+      virtual ~lg3303(void) {}
       
-   protected:
-      
-      static const frequency_band lgh064f_bands[3];
-   
-};
+      virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
 
-const frequency_band lgh064f::lgh064f_bands[] =
-{
-   {54000000,  165000000, 62500, 0xCE, 0x01, 0x50},
-   {165000000, 450000000, 62500, 0xCE, 0x02, 0x50},
-   {450000000, 863000000, 62500, 0xCE, 0x04, 0x50}
-};
+      virtual int get_signal(dvb_signal &signal);
+
+   private:
+      
+      int reset(void);
+      
+      dvb_modulation_t m_modulation;
+      dvb_polarity_t m_clock_polarity;
+      uint8_t m_input;
+};   
 
 #endif

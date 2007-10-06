@@ -154,7 +154,7 @@ int or51132::set_channel(const dvb_channel &channel, dvb_interface &interface)
    int error = 0;
    interface.bit_endianness = DVB_IFC_BIT_BE;
    interface.polarity = DVB_IFC_NEG_POL;
-   interface.input_width_bits = 8;
+   interface.input_width_bits = DVB_INPUT_PARALLEL;
    uint8_t old_mode = m_mode;
    switch(channel.modulation)
    {
@@ -200,11 +200,17 @@ int or51132::get_signal(dvb_signal &signal)
    signal.ber = 0.0;
    signal.uncorrected_blocks = 0;   
    status[0] = get_mode(status[1]);
-   if ((status[0] == OR51132_MODE_UNKNOWN) || !(status[1] & 0x01))
+   if (status[0] == OR51132_MODE_UNKNOWN)
    {
-      LIBTUNERERR << "OR51132: Unable to retrieve signal status: no lock" << endl;
+      LIBTUNERERR << "OR51132: Unable to retrieve signal status: Modulation not set" << endl;
       return ENXIO;
    }
+   if (!(status[1] & 0x01))
+   {
+      signal.locked = false;
+      return 0;
+   }
+   signal.locked = true;
    uint8_t ntsc_correction = 0;
    double snr_const = 0.0;
    switch (status[0])

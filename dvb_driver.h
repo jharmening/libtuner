@@ -32,6 +32,7 @@
 
 enum dvb_modulation_t
 {
+   DVB_MOD_UNKNOWN,
    DVB_MOD_VSB_8,
    DVB_MOD_VSB_16,
    DVB_MOD_QAM_16,
@@ -62,6 +63,12 @@ enum dvb_endianness_t
    DVB_IFC_BIT_LE
 };
 
+enum dvb_input_t
+{
+   DVB_INPUT_SERIAL = 1,
+   DVB_INPUT_PARALLEL = 8
+};
+
 typedef struct
 {
    uint8_t input_width_bits;
@@ -79,6 +86,7 @@ typedef struct
 
 typedef struct
 {
+   bool locked;
    double strength;
    double snr;
    double ber;
