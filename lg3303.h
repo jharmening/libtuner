@@ -42,10 +42,25 @@ class lg3303
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
 
       virtual int get_signal(dvb_signal &signal);
+            
+      virtual int start(uint32_t timeout_ms);
+
+      virtual void stop(void) {}
+
+      virtual void reset(void) 
+      {
+         do_reset();
+      }
 
    private:
       
-      int reset(void);
+      int do_reset(void);
+      
+      int check_for_lock(bool &locked);
+      
+      int write(uint8_t *buffer, size_t length);
+      
+      int read(uint8_t reg, uint8_t *buffer, size_t length);
       
       dvb_modulation_t m_modulation;
       dvb_polarity_t m_clock_polarity;
