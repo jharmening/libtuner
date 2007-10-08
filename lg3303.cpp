@@ -106,7 +106,11 @@ int lg3303::read(uint8_t reg, uint8_t *buffer, size_t length)
 
 int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
-   int error = 0;
+   int error = do_reset();
+   if (error)
+   {
+      return error;
+   }
    interface.bit_endianness = DVB_IFC_BIT_LE;
    interface.polarity = m_clock_polarity;
    interface.input_width_bits = m_input;
@@ -136,13 +140,13 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
       0x4a, 0x9b   
    };
 
-   uint8_t top_ctrl[] = {REG_TOP_CONTROL, 0x00};
-   if (m_input == DVB_INPUT_SERIAL)
-   {
-      top_ctrl[1] = 0x40;  
-   }
    if (m_modulation != channel.modulation)
-   {
+   { 
+      uint8_t top_ctrl[] = {REG_TOP_CONTROL, 0x00};
+      if (m_input == DVB_INPUT_SERIAL)
+      {
+         top_ctrl[1] = 0x40;  
+      }
       switch (channel.modulation)
       {
          case DVB_MOD_VSB_8:
@@ -166,49 +170,61 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
             LIBTUNERERR << "LG3303: Unsupported modulation type\n" << endl;
             return EINVAL;
       }
+      if ((error = write(top_ctrl, sizeof(top_ctrl))))
+      {
+         return error;  
+      }
+      m_modulation = channel.modulation;
+      error = do_reset();
    }
-   if ((error = write(top_ctrl, sizeof(top_ctrl))))
-   {
-      return error;  
-   }
-   m_modulation = channel.modulation;
-   return do_reset();
+   return error;
 }
 
 int lg3303::check_for_lock(bool &locked)
 {
    uint8_t reg, value = 0x00;
-   
+   int error = 0;
+   locked = false;
    reg = 0x58;
-   if (read(reg, &value, sizeof(value)))
+   if ((error = read(reg, &value, sizeof(value))))
    {
-      return ENXIO;
+      LIBTUNERERR << "LG3303: Unable to retrieve signal status" << endl;
+      return error;
    }
-   printf("AGC status = 0x%x\n", value);
+   if (!(value & 0x01))
+   {
+      return 0;  
+   }
    reg = REG_CARRIER_LOCK;
-   if (read(reg, &value, sizeof(value)))
+   if ((error = read(reg, &value, sizeof(value))))
    {
-      return ENXIO;
+      return error;
    }
-   printf("Carrier lock = 0x%x\n", value);
-   
-   if (m_modulation == DVB_MOD_VSB_8)
+   switch (m_modulation)
    {
-      reg = 0x38;
+      case DVB_MOD_VSB_8:
+         if (!(value & 0x80))
+         {
+            return 0;
+         }
+         reg = 0x38;
+         break;
+      case DVB_MOD_QAM_64:
+      case DVB_MOD_QAM_256:
+         if ((value & 0x07) != 0x07)
+         {
+            return 0;
+         }
+         reg = 0x8A;
+         break;
+      default:
+         LIBTUNERERR << "LG3303: Unsupported modulation type" << endl;
+         return EINVAL;
    }
-   else
-   {
-      reg = 0x8a;
-   }
-   int error = read(reg, &value, sizeof(value));
-   printf("Value = 0x%x\n", value);
+   error = read(reg, &value, sizeof(value));
    if (!error && (value & 0x01))
    {
       locked = true;
-   }
-   else
-   {
-      locked = false;
    }
    return error;
 }

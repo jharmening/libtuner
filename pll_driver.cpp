@@ -79,9 +79,13 @@ int pll_driver::set_channel(const dvb_channel &channel, dvb_interface &interface
 
 int pll_driver::start(uint32_t timeout_ms)
 {
-   if (m_state != DVB_PLL_CONFIGURED)
+   if (m_state < DVB_PLL_CONFIGURED)
    {
       return ENXIO;
+   }
+   else if (m_state == DVB_PLL_LOCKED)
+   {
+      return 0;
    }
    int error = 0;
    if (m_buffer[4] != DVB_PLL_IGNORE_AUX)
