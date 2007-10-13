@@ -80,7 +80,7 @@ typedef struct
 typedef struct
 {
    dvb_modulation_t modulation;
-   uint32_t frequency_hz;
+   uint64_t frequency_hz;
    uint32_t bandwidth_hz;
 } dvb_channel;
 

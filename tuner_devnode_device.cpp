@@ -25,6 +25,7 @@
  *
  */
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -42,6 +43,7 @@ tuner_devnode_device::tuner_devnode_device(tuner_config &config, const char *dev
    }
    if ((m_devnode_fd = open(devnode, O_RDWR)) < 0)
    {
+      LIBTUNERERR << "Unable to open device " << devnode << ": " << strerror(errno) << endl;
       error = ENOENT;
    }
 }
@@ -59,6 +61,7 @@ int tuner_devnode_device::write(uint8_t *buffer, size_t size, size_t &written)
    ssize_t retval = ::write(m_devnode_fd, buffer, size);
    if (retval == (ssize_t)-1)
    {
+      LIBTUNERERR << "Unable to write to device: " << strerror(errno) << endl;
       return errno;
    }
    written = retval;
@@ -70,8 +73,10 @@ int tuner_devnode_device::read(uint8_t *buffer, size_t size, size_t &read)
    ssize_t retval = ::read(m_devnode_fd, buffer, size);
    if (retval == ssize_t(-1))
    {
+      LIBTUNERERR << "Unable to read from device: " << strerror(errno) << endl;
       return errno;
    }
    read = retval;
    return 0;
 }
+
