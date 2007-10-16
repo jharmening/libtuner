@@ -25,25 +25,18 @@
  *
  */
 
-#ifndef __DTT7612_H__
-#define __DTT7612_H__
+#include "lgh064f.h"
 
-#include "pll_driver.h"
+lgh064f::lgh064f(tuner_config &config, tuner_device &device)
+   : pll_driver(config, device, 44000000,
+         lgh064f_bands, (sizeof(lgh064f_bands) / sizeof(frequency_band)))
+{}
 
-class dtt7612
-   : public pll_driver
+lgh064f::~lgh064f(void) {}
+
+const frequency_band lgh064f::lgh064f_bands[] =
 {
-
-   public:
-
-      dtt7612(tuner_config &config, tuner_device &device);
-      
-      virtual ~dtt7612(void);
-
-   protected:
-
-      static const frequency_band dtt7612_bands[3];
-
+   {54000000,  165000000, 62500, 0xCE, 0x01, 0x50},
+   {165000000, 450000000, 62500, 0xCE, 0x02, 0x50},
+   {450000000, 863000000, 62500, 0xCE, 0x04, 0x50}
 };
-
-#endif
