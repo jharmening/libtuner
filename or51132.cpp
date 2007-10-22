@@ -197,7 +197,7 @@ int or51132::get_signal(dvb_signal &signal)
    static uint8_t buffer[] = {0x04, 0x02};
    uint8_t status[2];
    uint32_t noise;
-   signal.ber = 0.0;
+   signal.ber = 0;
    signal.uncorrected_blocks = 0;   
    status[0] = get_mode(status[1]);
    if (status[0] == OR51132_MODE_UNKNOWN)

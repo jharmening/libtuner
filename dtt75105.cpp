@@ -25,29 +25,30 @@
  *
  */
 
-#ifndef __TUNER_DEVNODE_DEVICE_H__
-#define __TUNER_DEVNODE_DEVICE_H__
+#include "dtt75105.h"
 
-#include "tuner_device.h"
+dtt75105::dtt75105(tuner_config &config, tuner_device &device)
+   : pll_driver(config, device, 36166667,
+         dtt75105_bands, (sizeof(dtt75105_bands) / sizeof(frequency_band)))
+{}
 
-class tuner_devnode_device
-   : public tuner_device
+dtt75105::~dtt75105(void) {}
+
+const frequency_band dtt75105::dtt75105_bands[] =
 {
-   public:
-
-      tuner_devnode_device(tuner_config &config, const char *devnode, int &error);
-
-      virtual ~tuner_devnode_device(void);
-
-      virtual int write(const uint8_t *buffer, size_t size, size_t &written);
-
-      virtual int read(uint8_t *buffer, size_t size, size_t &read);
-
-   protected:
-
-      int m_devnode_fd;
-
+   {177000000, 264000000, 166667, 0xb4, 0x02, PLL_IGNORE_AUX},
+   {264000000, 470000000, 166667, 0xbc, 0x02, PLL_IGNORE_AUX},
+   {470000000, 735000000, 166667, 0xbc, 0x08, PLL_IGNORE_AUX},
+   {735000000, 835000000, 166667, 0xf4, 0x08, PLL_IGNORE_AUX},
+   {835000000, 896000000, 166667, 0xfc, 0x08, PLL_IGNORE_AUX}
 };
 
-#endif
-
+int dtt75105::set_channel(const dvb_channel &channel, dvb_interface &interface)
+{
+   int error = pll_driver::set_channel(channel, interface);
+   if (!error && (channel.bandwidth_hz == 7000000))
+   {
+      m_buffer[PLL_BANDSWITCH_BYTE] |= 0x10;
+   }
+   return error;
+}

@@ -42,11 +42,11 @@ class tuner_device
 
       virtual ~tuner_device(void) {}
 
-      virtual int write(uint8_t *buffer, size_t size, size_t &written) = 0;
+      virtual int write(const uint8_t *buffer, size_t size, size_t &written) = 0;
 
       virtual int read(uint8_t *buffer, size_t size, size_t &read) = 0;
 
-      virtual int write(uint8_t *buffer, size_t size)
+      virtual int write(const uint8_t *buffer, size_t size)
       {
          size_t transferred = 0;
          return write(buffer, size, transferred);
@@ -57,7 +57,13 @@ class tuner_device
          size_t transferred = 0;
          return read(buffer, size, transferred);
       }
+      
+      virtual int write_array(const uint8_t *buffer, size_t elem_size, size_t total_size);
+      
+      virtual int read_array(uint8_t *buffer, size_t elem_size, size_t total_size);
 
+      virtual int transact(const uint8_t *write_buffer, size_t write_size, uint8_t *read_buffer, size_t read_size);
+      
    protected:
 
       tuner_config &m_config;

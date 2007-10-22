@@ -35,7 +35,7 @@ pll_driver::pll_driver(
    const frequency_band *bands,
    size_t num_bands)
    : dvb_driver(config, device),
-     m_state(DVB_PLL_UNCONFIGURED),
+     m_state(PLL_UNCONFIGURED),
      m_frequency_hz(0),
      m_intermediate_frequency(intermediate_frequency),
      m_bands(bands),
@@ -45,7 +45,7 @@ pll_driver::pll_driver(
 
 int pll_driver::set_frequency(uint32_t frequency_hz)
 {
-   if ((m_state > DVB_PLL_UNCONFIGURED) && (frequency_hz == m_frequency_hz))
+   if ((m_state > PLL_UNCONFIGURED) && (frequency_hz == m_frequency_hz))
    {
       return 0;
    }
@@ -68,7 +68,7 @@ int pll_driver::set_frequency(uint32_t frequency_hz)
       return EINVAL;  
    }
    m_frequency_hz = frequency_hz;
-   m_state = DVB_PLL_CONFIGURED;
+   m_state = PLL_CONFIGURED;
    return 0;
 }
 
@@ -79,16 +79,16 @@ int pll_driver::set_channel(const dvb_channel &channel, dvb_interface &interface
 
 int pll_driver::start(uint32_t timeout_ms)
 {
-   if (m_state < DVB_PLL_CONFIGURED)
+   if (m_state < PLL_CONFIGURED)
    {
       return ENXIO;
    }
-   else if (m_state == DVB_PLL_LOCKED)
+   else if (m_state == PLL_LOCKED)
    {
       return 0;
    }
    int error = 0;
-   if (m_buffer[4] != DVB_PLL_IGNORE_AUX)
+   if (m_buffer[4] != PLL_IGNORE_AUX)
    {
       uint8_t aux_buffer[2];
       aux_buffer[0] = m_buffer[2] | 0x18;
@@ -127,7 +127,7 @@ int pll_driver::start(uint32_t timeout_ms)
       else
       {
          DIAGNOSTIC(LIBTUNERLOG << "PLL has lock" << endl)
-         m_state = DVB_PLL_LOCKED;
+         m_state = PLL_LOCKED;
       }
    }
    return error;
@@ -135,13 +135,13 @@ int pll_driver::start(uint32_t timeout_ms)
 
 void pll_driver::stop(void)
 {
-   if (m_state != DVB_PLL_UNCONFIGURED)
+   if (m_state != PLL_UNCONFIGURED)
    {
       uint8_t stop_buffer[2];
       stop_buffer[0] = m_buffer[2] | 0x01;
       stop_buffer[1] = m_buffer[3];
       m_device.write(stop_buffer, 2);
-      m_state = DVB_PLL_CONFIGURED;
+      m_state = PLL_CONFIGURED;
    }
 }
 
@@ -149,5 +149,5 @@ void pll_driver::reset(void)
 {
    stop();
    m_frequency_hz = 0;
-   m_state = DVB_PLL_UNCONFIGURED;
+   m_state = PLL_UNCONFIGURED;
 }

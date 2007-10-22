@@ -25,29 +25,27 @@
  *
  */
 
-#ifndef __TUNER_DEVNODE_DEVICE_H__
-#define __TUNER_DEVNODE_DEVICE_H__
+#ifndef __DTT_75105_H__
+#define __DTT_75105_H__
 
-#include "tuner_device.h"
+#include "pll_driver.h"
 
-class tuner_devnode_device
-   : public tuner_device
+class dtt75105
+   : public pll_driver
 {
+
    public:
 
-      tuner_devnode_device(tuner_config &config, const char *devnode, int &error);
+      dtt75105(tuner_config &config, tuner_device &device);
 
-      virtual ~tuner_devnode_device(void);
+      virtual ~dtt75105(void);
 
-      virtual int write(const uint8_t *buffer, size_t size, size_t &written);
-
-      virtual int read(uint8_t *buffer, size_t size, size_t &read);
+      virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
 
    protected:
 
-      int m_devnode_fd;
+      static const frequency_band dtt75105_bands[5];
 
 };
 
 #endif
-

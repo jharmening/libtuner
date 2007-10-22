@@ -46,18 +46,18 @@ lg3303::lg3303(tuner_config &config, tuner_device &device,
      m_clock_polarity(clock_polarity),
      m_input(input)
 {
-   static uint8_t init_data[] = {0x4c, 0x14, 0x87, 0xf3};
+   static const uint8_t init_data[] = {0x4c, 0x14, 0x87, 0xf3};
    if (error)
    {
       return;
    }
    if (clock_polarity == DVB_IFC_POS_POL)
    {
-      error = write(init_data, 4);
+      error = m_device.write_array(init_data, 2, 4);
    }
    else
    {
-      error = write(init_data, 2);
+      error = m_device.write(init_data, 2);
    }
    if (!error)
    {
@@ -68,42 +68,15 @@ lg3303::lg3303(tuner_config &config, tuner_device &device,
 int lg3303::do_reset(void)
 {
    uint8_t buffer[] = {REG_IRQ_STATUS, 0x00};
-   int error = write(buffer, 2);
+   int error = m_device.write(buffer, 2);
    if (!error)
    {
       buffer[1] = 0x01;
-      error = write(buffer, 2);  
+      error = m_device.write(buffer, 2);  
    }
    return error;
 }
       
-int lg3303::write(uint8_t *buffer, size_t length)
-{
-   int error = 0;
-   if ((length % 2) != 0)
-   {
-      return EINVAL;
-   }
-   for (size_t i = 0; i < length; i += 2)
-   {
-      if ((error = m_device.write(buffer + i, 2)))
-      {
-         return error;
-      }
-   }
-   return error;
-}
-
-int lg3303::read(uint8_t reg, uint8_t *buffer, size_t length)
-{
-   int error = m_device.write(&reg, sizeof(reg));
-   if (error)
-   {
-      return error;
-   }
-   return m_device.read(buffer, length);   
-}
-
 int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
    int error = do_reset();
@@ -115,7 +88,7 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
    interface.polarity = m_clock_polarity;
    interface.input_width_bits = m_input;
    interface.clock = DVB_IFC_NORM_CLCK;
-   static uint8_t vsb_data[] = 
+   static const uint8_t vsb_data[] = 
    {
       0x04, 0x00,
       0x0d, 0x40,
@@ -125,7 +98,7 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
       0x47, 0x8b
    };
    
-   static uint8_t qam_data[] =
+   static const uint8_t qam_data[] =
    {
       0x04, 0x00,
       0x0d, 0x00,
@@ -151,7 +124,7 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
       {
          case DVB_MOD_VSB_8:
             top_ctrl[1] |= 0x03;
-            if ((error = write(vsb_data, sizeof(vsb_data))))
+            if ((error = m_device.write_array(vsb_data, 2, sizeof(vsb_data))))
             {
                LIBTUNERERR << "LG3303: Unable to configure 8-VSB modulation" << endl;
                return error;
@@ -160,7 +133,7 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
          case DVB_MOD_QAM_256:
             top_ctrl[1] |= 0x01;
          case DVB_MOD_QAM_64:
-            if ((error = write(qam_data, sizeof(qam_data))))
+            if ((error = m_device.write_array(qam_data, 2, sizeof(qam_data))))
             {
                LIBTUNERERR << "LG3303: Unable to configure QAM modulation" << endl;
                return error;
@@ -170,7 +143,7 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
             LIBTUNERERR << "LG3303: Unsupported modulation type\n" << endl;
             return EINVAL;
       }
-      if ((error = write(top_ctrl, sizeof(top_ctrl))))
+      if ((error = m_device.write(top_ctrl, sizeof(top_ctrl))))
       {
          return error;  
       }
@@ -186,7 +159,7 @@ int lg3303::check_for_lock(bool &locked)
    int error = 0;
    locked = false;
    reg = 0x58;
-   if ((error = read(reg, &value, sizeof(value))))
+   if ((error = m_device.transact(&reg, sizeof(reg), &value, sizeof(value))))
    {
       LIBTUNERERR << "LG3303: Unable to retrieve signal status" << endl;
       return error;
@@ -196,8 +169,9 @@ int lg3303::check_for_lock(bool &locked)
       return 0;  
    }
    reg = REG_CARRIER_LOCK;
-   if ((error = read(reg, &value, sizeof(value))))
+   if ((error = m_device.transact(&reg, sizeof(reg), &value, sizeof(value))))
    {
+      LIBTUNERERR << "LG3303: Unable to retrieve carrier lock status" << endl;
       return error;
    }
    switch (m_modulation)
@@ -221,7 +195,7 @@ int lg3303::check_for_lock(bool &locked)
          LIBTUNERERR << "LG3303: Unsupported modulation type" << endl;
          return EINVAL;
    }
-   error = read(reg, &value, sizeof(value));
+   error = m_device.transact(&reg, sizeof(reg), &value, sizeof(value));
    if (!error && (value & 0x01))
    {
       locked = true;
@@ -233,38 +207,42 @@ int lg3303::start(uint32_t timeout_ms)
 {
    uint32_t elapsed = 0;
    bool locked = false;
+   int error = 0;
    do
    {
-      check_for_lock(locked);
+      error = check_for_lock(locked);
+      if (error || locked)
+      {
+         break;
+      }
       usleep(50000);
       elapsed += 50;     
    }
-   while (!locked && (elapsed < timeout_ms));
+   while (elapsed < timeout_ms);
    if (!locked)
    {
       LIBTUNERERR << "LG3303: demodulator not locked" << endl;
       return ETIMEDOUT;
    }
-   return 0;
+   return error;
 }
 
 int lg3303::get_signal(dvb_signal &signal)
 {
-   int error = 0;
+   int error = check_for_lock(signal.locked);
    uint32_t noise, snr_const;
    uint8_t buffer[5];
    uint8_t reg;
-   check_for_lock(signal.locked);
-   if (!signal.locked)
+   if (error || !signal.locked)
    {
-      return 0;
+      return error;
    }
-   signal.ber = 0.0;
+   signal.ber = 0;
    switch(m_modulation)
    {
       case DVB_MOD_VSB_8:
          reg = REG_EQPH_ERR0;
-         if ((error = read(reg, buffer, sizeof(buffer))))
+         if ((error = m_device.transact(&reg, sizeof(reg), buffer, sizeof(buffer))))
          {
             LIBTUNERERR << "LG3303: Unable to retrieve 8-VSB noise value" << endl;
             return error;
@@ -275,7 +253,7 @@ int lg3303::get_signal(dvb_signal &signal)
       case DVB_MOD_QAM_64:
       case DVB_MOD_QAM_256:
          reg = REG_CARRIER_MSEQAM1;
-         if ((error = read(reg, buffer, 2)))
+         if ((error = m_device.transact(&reg, sizeof(reg), buffer, 2)))
          {
             LIBTUNERERR << "LG3303: Unable to retrieve QAM noise value" << endl;
             return error;
@@ -297,7 +275,7 @@ int lg3303::get_signal(dvb_signal &signal)
    signal.snr = 10.0 * log10((double)snr_const / noise);
    signal.strength = (signal.snr / 35) * 100;
    reg = REG_PACKET_ERR_COUNTER1;
-   if ((error = read(reg, buffer, 2)))
+   if ((error = m_device.transact(&reg, sizeof(reg), buffer, 2)))
    {
       LIBTUNERERR << "LG3303: Unable to retrieve packet error count" << endl;
       return error;

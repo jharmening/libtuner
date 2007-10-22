@@ -45,6 +45,27 @@ enum dvb_modulation_t
    DVB_MOD_OFDM
 };
 
+enum dvb_inversion_t
+{
+   DVB_INVERSION_AUTO,
+   DVB_INVERSION_OFF,
+   DVB_INVERSION_ON
+};
+
+enum dvb_fec_t
+{
+   DVB_FEC_NONE,
+   DVB_FEC_1_2,
+   DVB_FEC_2_3,
+   DVB_FEC_3_4,
+   DVB_FEC_4_5,
+   DVB_FEC_5_6,
+   DVB_FEC_6_7,
+   DVB_FEC_7_8,
+   DVB_FEC_8_9,
+   DVB_FEC_AUTO
+};
+
 enum dvb_clock_t
 {
    DVB_IFC_NORM_CLCK,
@@ -77,11 +98,64 @@ typedef struct
    dvb_endianness_t bit_endianness;
 } dvb_interface;
 
+#define DVB_SYMBOL_RATE_AUTO 0
+
+typedef struct
+{
+   uint32_t symbol_rate;
+   dvb_fec_t code_rate;
+} dvb_qam_settings;
+
+typedef dvb_qam_settings dvb_qpsk_settings;
+
+enum dvb_subcarrier_mode_t
+{
+   DVB_OFDM_2K_SUBCARRIERS,
+   DVB_OFDM_4K_SUBCARRIERS,
+   DVB_OFDM_8K_SUBCARRIERS,
+   DVB_OFDM_AUTO_SUBCARRIERS
+};
+
+enum dvb_guard_interval_t
+{  
+   DVB_OFDM_GUARD_1_32,
+   DVB_OFDM_GUARD_1_16,
+   DVB_OFDM_GUARD_1_8,
+   DVB_OFDM_GUARD_1_4,
+   DVB_OFDM_GUARD_AUTO 
+};
+
+enum dvb_hierarchy_t
+{
+   DVB_OFDM_HIERARCHY_NONE,
+   DVB_OFDM_HIERARCHY_AUTO,
+   DVB_OFDM_HIERARCHY_1,
+   DVB_OFDM_HIERARCHY_2,
+   DVB_OFDM_HIERARCHY_4
+};
+
+typedef struct
+{         
+   dvb_modulation_t subcarrier_modulation;
+   dvb_fec_t high_prio_code_rate;
+   dvb_fec_t low_prio_code_rate;
+   dvb_subcarrier_mode_t subcarrier_mode;
+   dvb_guard_interval_t guard_interval;
+   dvb_hierarchy_t hierarchy;
+} dvb_ofdm_settings;
+
 typedef struct
 {
    dvb_modulation_t modulation;
    uint64_t frequency_hz;
    uint32_t bandwidth_hz;
+   dvb_inversion_t inversion;
+   union
+   {
+      dvb_qam_settings qam;
+      dvb_qpsk_settings qpsk;
+      dvb_ofdm_settings ofdm;
+   } modulation_settings;
 } dvb_channel;
 
 typedef struct
@@ -89,7 +163,7 @@ typedef struct
    bool locked;
    double strength;
    double snr;
-   double ber;
+   uint32_t ber;
    uint32_t uncorrected_blocks;
 } dvb_signal;
 

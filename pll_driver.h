@@ -30,7 +30,7 @@
 
 #include "dvb_driver.h"
 
-#define DVB_PLL_IGNORE_AUX 0xFF
+#define PLL_IGNORE_AUX 0xFF
 
 typedef struct
 {
@@ -66,17 +66,27 @@ class pll_driver
       virtual void stop(void);
 
       virtual void reset(void);
-
-   private:
+      
+   protected:
 
       enum
       {
-         DVB_PLL_UNCONFIGURED,
-         DVB_PLL_CONFIGURED,
-         DVB_PLL_LOCKED
+         PLL_DIV0_BYTE = 0,
+         PLL_DIV1_BYTE,
+         PLL_CONTROL_BYTE,
+         PLL_BANDSWITCH_BYTE,
+         PLL_AUX_BYTE,
+         PLL_BUF_SIZE
+      };
+      
+      enum
+      {
+         PLL_UNCONFIGURED,
+         PLL_CONFIGURED,
+         PLL_LOCKED
       } m_state;
 
-      uint8_t m_buffer[5];
+      uint8_t m_buffer[PLL_BUF_SIZE];
       uint32_t m_frequency_hz;
       
       uint32_t m_intermediate_frequency;

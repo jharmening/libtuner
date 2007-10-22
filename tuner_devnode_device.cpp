@@ -56,7 +56,7 @@ tuner_devnode_device::~tuner_devnode_device(void)
    }
 }
 
-int tuner_devnode_device::write(uint8_t *buffer, size_t size, size_t &written)
+int tuner_devnode_device::write(const uint8_t *buffer, size_t size, size_t &written)
 {
    ssize_t retval = ::write(m_devnode_fd, buffer, size);
    if (retval == (ssize_t)-1)

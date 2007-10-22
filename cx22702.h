@@ -25,29 +25,43 @@
  *
  */
 
-#ifndef __TUNER_DEVNODE_DEVICE_H__
-#define __TUNER_DEVNODE_DEVICE_H__
+#ifndef __CX22702_H__
+#define __CX22702_H__
 
-#include "tuner_device.h"
+#include "dvb_driver.h"
 
-class tuner_devnode_device
-   : public tuner_device
+class cx22702
+   : public dvb_driver
 {
    public:
-
-      tuner_devnode_device(tuner_config &config, const char *devnode, int &error);
-
-      virtual ~tuner_devnode_device(void);
-
-      virtual int write(const uint8_t *buffer, size_t size, size_t &written);
-
-      virtual int read(uint8_t *buffer, size_t size, size_t &read);
-
-   protected:
-
-      int m_devnode_fd;
-
+         
+      cx22702(tuner_config &config, tuner_device &device, dvb_input_t input, int &error);
+      
+      virtual ~cx22702(void) {}
+      
+      virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
+      
+      virtual int get_signal(dvb_signal &signal);
+      
+      virtual int start(uint32_t timeout_ms);
+      
+      virtual void stop(void) {}
+      
+      virtual void reset(void) {}
+      
+      int enable_pll(void);
+      
+      int disable_pll(void);
+      
+   private:
+      
+      int check_for_lock(bool &locked);
+      
+      uint8_t m_input;
+      
+      uint8_t m_uncorrected_blocks;
 };
 
-#endif
+#include "dvb_driver.h"
 
+#endif
