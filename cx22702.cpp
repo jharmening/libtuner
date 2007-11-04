@@ -89,6 +89,7 @@ int cx22702::enable_pll(void)
    int error = m_device.transact(buffer, 1, &(buffer[1]), 1);
    if (!error)
    {
+      DIAGNOSTIC(printf("CX22702: enable_pll() read 0x%x\n", buffer[1]))
       buffer[1] &= 0xFE;
       error = m_device.write(buffer, sizeof(buffer));
    }
@@ -119,6 +120,7 @@ int cx22702::set_channel(const dvb_channel &channel, dvb_interface &interface)
    {
       return error;  
    }
+   DIAGNOSTIC(printf("CX22702: set_channel() status = 0x%x\n", transaction[1]))
    transaction[1] &= 0xCE;
    if (channel.inversion == DVB_INVERSION_ON)
    {
@@ -169,7 +171,7 @@ int cx22702::set_channel(const dvb_channel &channel, dvb_interface &interface)
    {
       return error;
    }
-   transaction[1] = ((transaction[1] & 0xFC) | 0x02);
+   transaction[1] &= 0xFC;
    if ((error = m_device.write(transaction, sizeof(transaction))))
    {
       return error;
@@ -196,6 +198,12 @@ int cx22702::set_channel(const dvb_channel &channel, dvb_interface &interface)
 int cx22702::check_for_lock(bool &locked)
 {
    locked = false;
+   DIAGNOSTIC(
+      ({
+         uint8_t reg23[] = {0x23, 0x00};
+         m_device.transact(reg23, 1, &(reg23[1]), 1);
+         printf("CX22702: read 0x%x from register 0x23\n", reg23[1]);
+      }))
    uint8_t status[] = {0x0A, 0x00};
    int error = m_device.transact(status, 1, &(status[1]), 1);
    if (error)
@@ -203,6 +211,7 @@ int cx22702::check_for_lock(bool &locked)
       LIBTUNERERR << "CX22702: Unable to retrieve lock status" << endl;
       return error;
    }
+   DIAGNOSTIC(printf("CX22702: check_for_lock() read 0x%x\n", status[1]))
    if (status[1] & 0x10)
    {
       locked = true;  
