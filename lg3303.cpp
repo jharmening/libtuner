@@ -84,7 +84,7 @@ int lg3303::set_channel(const dvb_channel &channel, dvb_interface &interface)
    {
       return error;
    }
-   interface.bit_endianness = DVB_IFC_BIT_LE;
+   interface.bit_endianness = DVB_IFC_BIT_BE;
    interface.polarity = m_clock_polarity;
    interface.input_width_bits = m_input;
    interface.clock = DVB_IFC_NORM_CLCK;

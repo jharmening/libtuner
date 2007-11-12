@@ -49,17 +49,11 @@ class tuner_config
 
       tuner_config(void) {}
 
-      tuner_config(const char *filename, int &error)
-      {
-         if (!error)
-         {
-            error = load_file(filename);
-         }
-      }
-
       virtual ~tuner_config(void) {}
 
       int load_file(const char *filename);
+      
+      int load_string(const char *str);
 
       template <typename numtype> numtype get_number(const char *key);
 
@@ -67,6 +61,8 @@ class tuner_config
 
    private:
 
+      int load(istream &stream);
+      
       typedef map<string, string> strmap;
       strmap entries;
 

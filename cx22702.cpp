@@ -89,7 +89,6 @@ int cx22702::enable_pll(void)
    int error = m_device.transact(buffer, 1, &(buffer[1]), 1);
    if (!error)
    {
-      DIAGNOSTIC(printf("CX22702: enable_pll() read 0x%x\n", buffer[1]))
       buffer[1] &= 0xFE;
       error = m_device.write(buffer, sizeof(buffer));
    }
@@ -113,14 +112,13 @@ int cx22702::set_channel(const dvb_channel &channel, dvb_interface &interface)
    interface.input_width_bits = m_input;
    interface.clock = DVB_IFC_NORM_CLCK;
    interface.polarity = DVB_IFC_NEG_POL;
-   interface.bit_endianness = DVB_IFC_BIT_LE;
+   interface.bit_endianness = DVB_IFC_BIT_BE;
    uint8_t transaction[] = {0x0C, 0x00};
    int error = m_device.transact(transaction, 1, &(transaction[1]), 1);
    if (error)
    {
       return error;  
    }
-   DIAGNOSTIC(printf("CX22702: set_channel() status = 0x%x\n", transaction[1]))
    transaction[1] &= 0xCE;
    if (channel.inversion == DVB_INVERSION_ON)
    {
@@ -198,12 +196,6 @@ int cx22702::set_channel(const dvb_channel &channel, dvb_interface &interface)
 int cx22702::check_for_lock(bool &locked)
 {
    locked = false;
-   DIAGNOSTIC(
-      ({
-         uint8_t reg23[] = {0x23, 0x00};
-         m_device.transact(reg23, 1, &(reg23[1]), 1);
-         printf("CX22702: read 0x%x from register 0x23\n", reg23[1]);
-      }))
    uint8_t status[] = {0x0A, 0x00};
    int error = m_device.transact(status, 1, &(status[1]), 1);
    if (error)
@@ -211,7 +203,6 @@ int cx22702::check_for_lock(bool &locked)
       LIBTUNERERR << "CX22702: Unable to retrieve lock status" << endl;
       return error;
    }
-   DIAGNOSTIC(printf("CX22702: check_for_lock() read 0x%x\n", status[1]))
    if (status[1] & 0x10)
    {
       locked = true;  
@@ -279,7 +270,8 @@ int cx22702::get_signal(dvb_signal &signal)
    }
    signal.ber = ber;
    signal.snr = 0.0;
-   signal.strength = ((double)(~ber) / 0xFFFF) * 100;
+   uint32_t inverse_ber = (uint16_t)(~ber);
+   signal.strength = ((double)inverse_ber / 0xFFFF) * 100;
    reg = 0xE3;
    if ((error = m_device.transact(&reg, sizeof(reg), &value, sizeof(value))))
    {

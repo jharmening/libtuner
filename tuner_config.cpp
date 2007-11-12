@@ -26,7 +26,6 @@
  */
 
 #include <sys/errno.h>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 
@@ -37,21 +36,16 @@ using namespace std;
 #define WHITESPACE " \t"
 #define DELIMS WHITESPACE"="
 
-int tuner_config::load_file(const char *filename)
+int tuner_config::load(istream &stream)
 {
-   ifstream file(filename);
-   if (!file.is_open())
-   {
-      return ENOENT;
-   }
    int error = 0;
    try
    {
       string line;
       int lineno = 0;
-      while (!file.eof())
+      while (!stream.eof())
       {
-         getline(file, line);
+         getline(stream, line);
          ++lineno;
          string::size_type token_begin, token_end;
          token_begin = line.find_first_not_of(WHITESPACE);
@@ -66,7 +60,7 @@ int tuner_config::load_file(const char *filename)
          token_end = line.find_first_of(DELIMS, token_begin);
          if (token_end == string::npos)
          {
-            LIBTUNERERR << filename << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
+            LIBTUNERERR << streamname << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
             continue;
          }
          string ident = line.substr(token_begin, token_end - token_begin);
@@ -74,7 +68,7 @@ int tuner_config::load_file(const char *filename)
          token_begin = line.find_first_not_of(DELIMS, token_end);
          if (token_begin == string::npos)
          {
-            LIBTUNERERR << filename << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
+            LIBTUNERERR << streamname << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
             continue;
          }
          token_end = line.find_last_not_of(WHITESPACE) + 1;
@@ -86,8 +80,25 @@ int tuner_config::load_file(const char *filename)
    {
       error = ENOMEM;
    }
-   file.close();
+   stream.close();
    return error;
+}
+               
+int tuner_config::load_file(const char *filename)
+{
+   ifstream file(filename);
+   if (!file.is_open())
+   {
+      return ENOENT;
+   }
+   return load(file);
+}
+
+int tuner_config::load_string(const char *str)
+{
+   string s(str);
+   istringstream strstream(s);
+   return load(strstream);
 }
 
 const char *tuner_config::get_string(const char *key)
