@@ -60,7 +60,7 @@ int tuner_config::load(istream &stream)
          token_end = line.find_first_of(DELIMS, token_begin);
          if (token_end == string::npos)
          {
-            LIBTUNERERR << streamname << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
+            LIBTUNERERR << "line " << lineno << ": Warning: skipped identifier without value" << endl;
             continue;
          }
          string ident = line.substr(token_begin, token_end - token_begin);
@@ -68,7 +68,7 @@ int tuner_config::load(istream &stream)
          token_begin = line.find_first_not_of(DELIMS, token_end);
          if (token_begin == string::npos)
          {
-            LIBTUNERERR << streamname << '[' << lineno << "]: Warning: skipped identifier without value" << endl;
+            LIBTUNERERR << "line " << lineno << ": Warning: skipped identifier without value" << endl;
             continue;
          }
          token_end = line.find_last_not_of(WHITESPACE) + 1;
@@ -80,7 +80,6 @@ int tuner_config::load(istream &stream)
    {
       error = ENOMEM;
    }
-   stream.close();
    return error;
 }
                
@@ -91,7 +90,9 @@ int tuner_config::load_file(const char *filename)
    {
       return ENOENT;
    }
-   return load(file);
+   int error = load(file);
+   file.close();
+   return error;
 }
 
 int tuner_config::load_string(const char *str)
