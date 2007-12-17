@@ -27,7 +27,6 @@
 
 #include <sys/errno.h>
 #include <fstream>
-#include <sstream>
 
 using namespace std;
 
@@ -43,6 +42,11 @@ int tuner_config::load(istream &stream)
    {
       string line;
       int lineno = 0;
+      if (m_maps.size() == 0)
+      {
+         strmap new_map;
+         m_maps.push_back(new_map);
+      }
       while (!stream.eof())
       {
          getline(stream, line);
@@ -73,7 +77,8 @@ int tuner_config::load(istream &stream)
          }
          token_end = line.find_last_not_of(WHITESPACE) + 1;
          string value = line.substr(token_begin, token_end);
-         entries.insert(pair<string, string> (ident, value));
+         m_maps.back().erase(ident);
+         m_maps.back().insert(pair<string, string> (ident, value));
       }
    }
    catch(...)
@@ -108,12 +113,15 @@ const char *tuner_config::get_string(const char *key)
    {
       string strkey(key);
       transform(strkey.begin(), strkey.end(), strkey.begin(), (int(*)(int))std::tolower);
-      strmap::iterator it = entries.find(strkey);
-      if (it == entries.end())
+      for (maplist::reverse_iterator iter = m_maps.rbegin(); iter != m_maps.rend(); ++iter)
       {
-         return NULL;
+         strmap::iterator it = iter->find(strkey);
+         if (it != iter->end())
+         {
+            return it->second.c_str();
+         }
       }
-      return it->second.c_str();
+      return NULL;
    }
    catch(...)
    {
@@ -121,26 +129,36 @@ const char *tuner_config::get_string(const char *key)
    }
 }
 
-template <typename numtype> 
-numtype tuner_config::get_number(const char *key)
+int tuner_config::add_config_layer(tuner_config_layer &layer)
 {
    try
    {
-      string strkey(key);
-      transform(strkey.begin(), strkey.end(), strkey.begin(), (int(*)(int))std::tolower);
-      strmap::iterator it = entries.find(strkey);
-      if (it == entries.end())
+      for (maplist::iterator pos = layer.config().m_maps.begin(); pos != layer.config().m_maps.end(); ++pos)
       {
-         return ((numtype)0);
+         layer.m_end = m_maps.insert(m_maps.end(), *pos);
+         if (pos == layer.config().m_maps.begin())
+         {
+            layer.m_start = layer.m_end;
+         }
       }
-      string value = it->second;
-      stringstream stream(value);
-      numtype val;
-      stream >> val;
-      return val;
+      return 0;
    }
-   catch(...)
+   catch (...)
    {
-      return ((numtype)0);
+      return ENOMEM;
    }
+}
+
+void tuner_config::remove_config_layer(tuner_config_layer &layer)     
+{
+   try
+   {
+      if (layer.m_start != layer.m_config.m_maps.end())
+      {
+         maplist::iterator end = layer.m_end;
+         ++end;
+         m_maps.erase(layer.m_start, end);
+      }
+   }
+   catch (...) {} 
 }

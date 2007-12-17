@@ -41,7 +41,11 @@
 #include <iomanip>
 #include <string>
 #include <map>
+#include <list>
+#include <sstream>
 using namespace std;
+
+class tuner_config_layer;
 
 class tuner_config
 {
@@ -55,17 +59,78 @@ class tuner_config
       
       int load_string(const char *str);
 
-      template <typename numtype> numtype get_number(const char *key);
-
+      template <typename numtype> 
+      numtype get_number(const char *key)
+      {
+         try
+         {
+            string strkey(key);
+            transform(strkey.begin(), strkey.end(), strkey.begin(), (int(*)(int))std::tolower);
+            for (maplist::reverse_iterator iter = m_maps.rbegin(); iter != m_maps.rend(); ++iter)
+            {
+               strmap::iterator it = iter->find(strkey);
+               if (it != iter->end())
+               {
+                  string value = it->second;
+                  stringstream stream(value);
+                  numtype val;
+                  stream >> val;
+                  return val;
+               }
+            }
+            return ((numtype)0);
+         }
+         catch(...)
+         {
+            return ((numtype)0);
+         }
+      }
+      
       const char *get_string(const char *key);
+      
+      int add_config_layer(tuner_config_layer &layer);
+      
+      void remove_config_layer(tuner_config_layer &layer);
+      
+      void pop_config(tuner_config_layer);
 
    private:
 
-      int load(istream &stream);
+      friend class tuner_config_layer;
       
+      int load(istream &stream);
+        
       typedef map<string, string> strmap;
-      strmap entries;
+      typedef list<strmap> maplist;
+      
+      maplist m_maps;
 
+};
+
+class tuner_config_layer
+{
+    
+   public:
+      
+      tuner_config_layer(void) : m_start (m_config.m_maps.end()) {}
+   
+      virtual ~tuner_config_layer(void) {}
+      
+      tuner_config &config(void)
+      {
+         return m_config;
+      }
+      
+   private:
+      
+      friend class tuner_config;
+      
+      tuner_config m_config;
+      
+      tuner_config::maplist::iterator m_start;
+      
+      tuner_config::maplist::iterator m_end;
+   
 };
 
 #endif

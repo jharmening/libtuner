@@ -50,9 +50,8 @@ class or51132
       virtual void reset(void) {}
 
    private:
-
-      const char *m_vsb_fw;
-      const char *m_qam_fw;
+      
+      tuner_config &m_config;
       uint8_t m_mode;
 
       uint8_t get_mode(uint8_t &status);

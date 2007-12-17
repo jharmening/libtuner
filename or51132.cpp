@@ -38,6 +38,8 @@
 
 #define OR51132_VSB_CONFIG_KEY "OR51132_VSB_FW"
 #define OR51132_QAM_CONFIG_KEY "OR51132_QAM_FW"
+#define OR51132_DELAY_KEY "OR51132_DELAY"
+#define OR51132_DEFAULT_DELAY 500000
 
 #define OR51132_MODE_UNKNOWN  0x00
 #define OR51132_MODE_VSB      0x06
@@ -47,19 +49,14 @@
 
 or51132::or51132(tuner_config &config, tuner_device &device)
    : dvb_driver(config, device),
-     m_vsb_fw(NULL),
-     m_qam_fw(NULL)
+     m_config(config)
 {
-   m_vsb_fw = config.get_string(OR51132_VSB_CONFIG_KEY);
-   m_qam_fw = config.get_string(OR51132_QAM_CONFIG_KEY);
    uint8_t status = 0;
    m_mode = get_mode(status);
 }
 
 or51132::~or51132(void)
 {
-   m_vsb_fw = NULL;
-   m_qam_fw = NULL;
 }
 
 int or51132::load_firmware(const char *filename, bool force)
@@ -175,13 +172,25 @@ int or51132::set_channel(const dvb_channel &channel, dvb_interface &interface)
    }
    if (m_mode == OR51132_MODE_VSB)
    {
+      const char *vsb_fw = m_config.get_string(OR51132_VSB_CONFIG_KEY);
+      if (vsb_fw == NULL)
+      {
+         LIBTUNERERR << "VSB firmware file not configured" << endl;
+         return ENOENT;
+      }
       interface.clock = DVB_IFC_NORM_CLCK;
-      error = load_firmware(m_vsb_fw, (old_mode != OR51132_MODE_VSB));
+      error = load_firmware(vsb_fw, (old_mode != OR51132_MODE_VSB));
    }
    else
    {
+      const char *qam_fw = m_config.get_string(OR51132_QAM_CONFIG_KEY);
+      if (qam_fw == NULL)
+      {
+         LIBTUNERERR << "QAM firmware file not configured" << endl;
+         return ENOENT;  
+      }
       interface.clock = DVB_IFC_PUNC_CLCK;
-      error = load_firmware(m_qam_fw, 
+      error = load_firmware(qam_fw, 
          ((old_mode != OR51132_MODE_QAM64) && (old_mode != OR51132_MODE_QAM256) && (old_mode != OR51132_MODE_QAM_AUTO)));
    }
    if (error)
@@ -315,6 +324,15 @@ int or51132::start(uint32_t timeout_ms)
    {
       LIBTUNERERR << "OR51132: demodulator not locked" << endl;
       return ETIMEDOUT;
+   }
+   else
+   {
+      unsigned int delay = m_config.get_number<unsigned int>(OR51132_DELAY_KEY);
+      if (delay == 0)
+      {
+         delay = OR51132_DEFAULT_DELAY;
+      }
+      usleep(delay);
    }
    return 0;
 }

@@ -39,6 +39,10 @@
 #define REG_PACKET_ERR_COUNTER1 0x8b
 #define REG_PACKET_ERR_COUNTER2 0x8c
 
+#define LG3303_DELAY_KEY "LG3303_DELAY"
+#define LG3303_DEFAULT_DELAY 250000
+
+
 lg3303::lg3303(tuner_config &config, tuner_device &device,     
    dvb_polarity_t clock_polarity, dvb_input_t input, int &error)
    : dvb_driver(config, device),
@@ -223,6 +227,15 @@ int lg3303::start(uint32_t timeout_ms)
    {
       LIBTUNERERR << "LG3303: demodulator not locked" << endl;
       return ETIMEDOUT;
+   }
+   else
+   {
+      unsigned int delay = m_config.get_number<unsigned int>(LG3303_DELAY_KEY);
+      if (delay == 0)
+      {
+         delay = LG3303_DEFAULT_DELAY;
+      }
+      usleep(delay);
    }
    return error;
 }
