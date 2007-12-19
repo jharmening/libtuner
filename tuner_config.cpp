@@ -129,18 +129,19 @@ const char *tuner_config::get_string(const char *key)
    }
 }
 
-int tuner_config::add_config_layer(tuner_config_layer &layer)
+int tuner_config::add_config(tuner_config &config)
 {
    try
    {
-      for (maplist::iterator pos = layer.config().m_maps.begin(); pos != layer.config().m_maps.end(); ++pos)
+      for (maplist::iterator pos = config.m_maps.begin(); pos != config.m_maps.end(); ++pos)
       {
-         layer.m_end = m_maps.insert(m_maps.end(), *pos);
-         if (pos == layer.config().m_maps.begin())
+         config.m_end = m_maps.insert(m_maps.end(), *pos);
+         if (pos == config.m_maps.begin())
          {
-            layer.m_start = layer.m_end;
+            config.m_start = config.m_end;
          }
       }
+      config.m_size = config.m_maps.size();
       return 0;
    }
    catch (...)
@@ -149,15 +150,15 @@ int tuner_config::add_config_layer(tuner_config_layer &layer)
    }
 }
 
-void tuner_config::remove_config_layer(tuner_config_layer &layer)     
+void tuner_config::remove_config(tuner_config &config)     
 {
    try
    {
-      if (layer.m_start != layer.m_config.m_maps.end())
+      if (config.m_size != 0)
       {
-         maplist::iterator end = layer.m_end;
+         maplist::iterator end = config.m_end;
          ++end;
-         m_maps.erase(layer.m_start, end);
+         m_maps.erase(config.m_start, end);
       }
    }
    catch (...) {} 

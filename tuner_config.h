@@ -51,7 +51,7 @@ class tuner_config
 {
    public:
 
-      tuner_config(void) {}
+      tuner_config(void) : m_size (0) {}
 
       virtual ~tuner_config(void) {}
 
@@ -88,11 +88,10 @@ class tuner_config
       
       const char *get_string(const char *key);
       
-      int add_config_layer(tuner_config_layer &layer);
+      int add_config(tuner_config &config);
       
-      void remove_config_layer(tuner_config_layer &layer);
+      void remove_config(tuner_config &config);
       
-      void pop_config(tuner_config_layer);
 
    private:
 
@@ -104,33 +103,13 @@ class tuner_config
       typedef list<strmap> maplist;
       
       maplist m_maps;
-
-};
-
-class tuner_config_layer
-{
-    
-   public:
-      
-      tuner_config_layer(void) : m_start (m_config.m_maps.end()) {}
-   
-      virtual ~tuner_config_layer(void) {}
-      
-      tuner_config &config(void)
-      {
-         return m_config;
-      }
-      
-   private:
-      
-      friend class tuner_config;
-      
-      tuner_config m_config;
       
       tuner_config::maplist::iterator m_start;
       
       tuner_config::maplist::iterator m_end;
-   
+      
+      size_t m_size;
+
 };
 
 #endif
