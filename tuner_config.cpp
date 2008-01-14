@@ -37,16 +37,15 @@ using namespace std;
 
 int tuner_config::load(istream &stream)
 {
+   if (m_next != NULL)
+   {
+      return m_next->load(stream);  
+   }
    int error = 0;
    try
    {
       string line;
       int lineno = 0;
-      if (m_maps.size() == 0)
-      {
-         strmap new_map;
-         m_maps.push_back(new_map);
-      }
       while (!stream.eof())
       {
          getline(stream, line);
@@ -77,8 +76,8 @@ int tuner_config::load(istream &stream)
          }
          token_end = line.find_last_not_of(WHITESPACE) + 1;
          string value = line.substr(token_begin, token_end);
-         m_maps.back().erase(ident);
-         m_maps.back().insert(pair<string, string> (ident, value));
+         m_map.erase(ident);
+         m_map.insert(pair<string, string> (ident, value));
       }
    }
    catch(...)
@@ -109,57 +108,57 @@ int tuner_config::load_string(const char *str)
 
 const char *tuner_config::get_string(const char *key)
 {
-   try
+   const char *str = NULL;
+   if (m_next != NULL)
    {
-      string strkey(key);
-      transform(strkey.begin(), strkey.end(), strkey.begin(), (int(*)(int))std::tolower);
-      for (maplist::reverse_iterator iter = m_maps.rbegin(); iter != m_maps.rend(); ++iter)
+      str = m_next->get_string(key);
+   }
+   if (str == NULL)
+   {
+      try
       {
-         strmap::iterator it = iter->find(strkey);
-         if (it != iter->end())
+         string strkey(key);
+         transform(strkey.begin(), strkey.end(), strkey.begin(), (int(*)(int))std::tolower);
+         strmap::iterator it = m_map.find(strkey);
+         if (it != m_map.end())
          {
             return it->second.c_str();
          }
+         return NULL;
       }
-      return NULL;
+      catch(...)
+      {
+         return NULL;
+      }
    }
-   catch(...)
-   {
-      return NULL;
-   }
+   return str;
 }
 
 int tuner_config::add_config(tuner_config &config)
 {
-   try
+   if (&config == this)
    {
-      for (maplist::iterator pos = config.m_maps.begin(); pos != config.m_maps.end(); ++pos)
-      {
-         config.m_end = m_maps.insert(m_maps.end(), *pos);
-         if (pos == config.m_maps.begin())
-         {
-            config.m_start = config.m_end;
-         }
-      }
-      config.m_size = config.m_maps.size();
-      return 0;
+      return EINVAL;  
    }
-   catch (...)
+   if (m_next != NULL)
    {
-      return ENOMEM;
+      return m_next->add_config(config);
    }
+   m_next = &config;
+   return 0;
 }
 
 void tuner_config::remove_config(tuner_config &config)     
 {
-   try
+   if (m_next != NULL)
    {
-      if (config.m_size != 0)
+      if (m_next == &config)
       {
-         maplist::iterator end = config.m_end;
-         ++end;
-         m_maps.erase(config.m_start, end);
+         m_next = m_next->m_next;    
+      }
+      else
+      {
+         m_next->remove_config(config);  
       }
    }
-   catch (...) {} 
 }

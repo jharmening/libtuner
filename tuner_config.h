@@ -45,48 +45,37 @@
 #include <sstream>
 using namespace std;
 
-class tuner_config_layer;
-
 class tuner_config
 {
    public:
 
-      tuner_config(void) : m_size (0) {}
+      tuner_config(void) : m_next (NULL) {}
 
       virtual ~tuner_config(void) {}
 
       int load_file(const char *filename);
       
       int load_string(const char *str);
+      
+      const char *get_string(const char *key);
 
       template <typename numtype> 
       numtype get_number(const char *key)
       {
-         try
+         const char *str = get_string(key);
+         if (str != NULL)
          {
-            string strkey(key);
-            transform(strkey.begin(), strkey.end(), strkey.begin(), (int(*)(int))std::tolower);
-            for (maplist::reverse_iterator iter = m_maps.rbegin(); iter != m_maps.rend(); ++iter)
-            {
-               strmap::iterator it = iter->find(strkey);
-               if (it != iter->end())
-               {
-                  string value = it->second;
-                  stringstream stream(value);
-                  numtype val;
-                  stream >> val;
-                  return val;
-               }
-            }
-            return ((numtype)0);
+            string value(str);
+            stringstream stream(value);
+            numtype val;
+            stream >> val;
+            return val;
          }
-         catch(...)
+         else
          {
             return ((numtype)0);
          }
       }
-      
-      const char *get_string(const char *key);
       
       int add_config(tuner_config &config);
       
@@ -94,21 +83,14 @@ class tuner_config
       
 
    private:
-
-      friend class tuner_config_layer;
       
       int load(istream &stream);
         
       typedef map<string, string> strmap;
-      typedef list<strmap> maplist;
       
-      maplist m_maps;
+      strmap m_map;
       
-      tuner_config::maplist::iterator m_start;
-      
-      tuner_config::maplist::iterator m_end;
-      
-      size_t m_size;
+      tuner_config *m_next;
 
 };
 
