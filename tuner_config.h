@@ -85,6 +85,8 @@ class tuner_config
    private:
       
       int load(istream &stream);
+      
+      const char *get_config_string(const char *key);
         
       typedef map<string, string> strmap;
       

@@ -108,6 +108,16 @@ int tuner_config::load_string(const char *str)
 
 const char *tuner_config::get_string(const char *key)
 {
+   const char *str = getenv(key);
+   if (str == NULL)
+   {  
+      str = get_config_string(key);
+   }
+   return str;
+}
+
+const char *tuner_config::get_config_string(const char *key)
+{
    const char *str = NULL;
    if (m_next != NULL)
    {
