@@ -41,6 +41,8 @@ class dtt75105
       virtual ~dtt75105(void);
 
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
+      
+      virtual int set_channel(const avb_channel &channel);
 
    protected:
 

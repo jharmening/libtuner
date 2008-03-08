@@ -29,7 +29,8 @@
 #include "cx22702.h"
 
 cx22702::cx22702(tuner_config &config, tuner_device &device, dvb_input_t input, int &error)
-   : dvb_driver(config, device),
+   : tuner_driver(config, device),
+     dvb_driver(config, device),
      m_input(input),
      m_uncorrected_blocks(0)
 {

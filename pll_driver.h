@@ -29,6 +29,7 @@
 #define __DVB_PLL_DRIVER_H__
 
 #include "dvb_driver.h"
+#include "avb_driver.h"
 
 #define PLL_IGNORE_AUX 0xFF
 
@@ -43,7 +44,8 @@ typedef struct
 } frequency_band;
 
 class pll_driver
-   : public dvb_driver
+   : public dvb_driver,
+     public avb_driver
 {
    public:
 
@@ -60,6 +62,8 @@ class pll_driver
       }
 
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
+      
+      virtual int set_channel(const avb_channel &channel);
 
       virtual int start(uint32_t timeout_ms);
 

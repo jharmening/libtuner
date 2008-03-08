@@ -52,7 +52,7 @@ enum avb_format
    AVB_FORMAT_SECAM_G,
    AVB_FORMAT_SECAM_H,
    AVB_FORMAT_SECAM_K
-}
+};
 
 typedef struct
 {
@@ -60,5 +60,20 @@ typedef struct
    uint32_t bandwidth_hz;
    avb_format format;
 } avb_channel;
+
+class avb_driver
+   : public virtual tuner_driver
+{
+   public:
+       
+      avb_driver(tuner_config &config, tuner_device &device)
+         : tuner_driver(config, device)
+      {}
+
+      virtual ~avb_driver(void) {}
+      
+      virtual int set_channel(const avb_channel &channel) = 0;
+   
+};
    
 #endif

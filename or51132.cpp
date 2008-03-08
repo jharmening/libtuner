@@ -48,7 +48,8 @@
 #define OR51132_MODE_QAM_AUTO 0x4F
 
 or51132::or51132(tuner_config &config, tuner_device &device)
-   : dvb_driver(config, device),
+   : tuner_driver(config, device),
+     dvb_driver(config, device),
      m_config(config)
 {
    uint8_t status = 0;

@@ -28,7 +28,8 @@
 #include "dtt7612.h"
 
 dtt7612::dtt7612(tuner_config &config, tuner_device &device)
-   : pll_driver(config, device, 44000000, 
+   :  tuner_driver(config, device),
+      pll_driver(config, device, 44000000, 
          dtt7612_bands, (sizeof(dtt7612_bands) / sizeof(frequency_band)))
 {}
       

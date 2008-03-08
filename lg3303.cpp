@@ -45,7 +45,8 @@
 
 lg3303::lg3303(tuner_config &config, tuner_device &device,     
    dvb_polarity_t clock_polarity, dvb_input_t input, int &error)
-   : dvb_driver(config, device),
+   : tuner_driver(config, device),
+     dvb_driver(config, device),
      m_modulation(DVB_MOD_UNKNOWN),
      m_clock_polarity(clock_polarity),
      m_input(input)

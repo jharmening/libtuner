@@ -168,7 +168,7 @@ typedef struct
 } dvb_signal;
 
 class dvb_driver
-   : public tuner_driver
+   : public virtual tuner_driver
 {
 
    public:

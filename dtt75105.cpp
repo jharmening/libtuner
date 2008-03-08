@@ -28,7 +28,8 @@
 #include "dtt75105.h"
 
 dtt75105::dtt75105(tuner_config &config, tuner_device &device)
-   : pll_driver(config, device, 36166667,
+   : tuner_driver(config, device),
+     pll_driver(config, device, 36166667,
          dtt75105_bands, (sizeof(dtt75105_bands) / sizeof(frequency_band)))
 {}
 
@@ -52,3 +53,14 @@ int dtt75105::set_channel(const dvb_channel &channel, dvb_interface &interface)
    }
    return error;
 }
+
+int dtt75105::set_channel(const avb_channel &channel)
+{
+   int error = pll_driver::set_channel(channel);
+   if (!error && (channel.bandwidth_hz == 7000000))
+   {
+      m_buffer[PLL_BANDSWITCH_BYTE] |= 0x10;
+   }
+   return error;
+}
+

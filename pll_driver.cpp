@@ -34,7 +34,9 @@ pll_driver::pll_driver(
    uint32_t intermediate_frequency,
    const frequency_band *bands,
    size_t num_bands)
-   : dvb_driver(config, device),
+   : tuner_driver(config, device),
+     dvb_driver(config, device),
+     avb_driver(config, device),
      m_state(PLL_UNCONFIGURED),
      m_frequency_hz(0),
      m_intermediate_frequency(intermediate_frequency),
@@ -75,6 +77,11 @@ int pll_driver::set_frequency(uint32_t frequency_hz)
 int pll_driver::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
    return set_frequency(channel.frequency_hz);
+}
+
+int pll_driver::set_channel(const avb_channel &channel)
+{
+   return set_frequency(channel.frequency_hz);  
 }
 
 int pll_driver::start(uint32_t timeout_ms)
