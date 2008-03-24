@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007 Jason Harmening
+ * Copyright 2008 Jason Harmening
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,35 +30,52 @@
 
 #include "tuner_driver.h"
 
-enum avb_format
+enum avb_video_format
 {
-   AVB_FORMAT_NTSC_M,
-   AVB_FORMAT_NTSC_N,
-   AVB_FORMAT_NTSC_J,
-   AVB_FORMAT_NTSC_443,
-   AVB_FORMAT_PAL_B,
-   AVB_FORMAT_PAL_D,
-   AVB_FORMAT_PAL_G,
-   AVB_FORMAT_PAL_H,
-   AVB_FORMAT_PAL_I,
-   AVB_FORMAT_PAL_K,
-   AVB_FORMAT_PAL_N,
-   AVB_FORMAT_PAL_NC,
-   AVB_FORMAT_PAL_M,
-   AVB_FORMAT_PAL_60,
-   AVB_FORMAT_SECAM_L,
-   AVB_FORMAT_SECAM_B,
-   AVB_FORMAT_SECAM_D,
-   AVB_FORMAT_SECAM_G,
-   AVB_FORMAT_SECAM_H,
-   AVB_FORMAT_SECAM_K
+   AVB_VIDEO_FORMAT_NONE,
+   AVB_VIDEO_FORMAT_NTSC_M,
+   AVB_VIDEO_FORMAT_NTSC_N,
+   AVB_VIDEO_FORMAT_NTSC_J,
+   AVB_VIDEO_FORMAT_NTSC_443,
+   AVB_VIDEO_FORMAT_PAL_B,
+   AVB_VIDEO_FORMAT_PAL_D,
+   AVB_VIDEO_FORMAT_PAL_G,
+   AVB_VIDEO_FORMAT_PAL_H,
+   AVB_VIDEO_FORMAT_PAL_I,
+   AVB_VIDEO_FORMAT_PAL_K,
+   AVB_VIDEO_FORMAT_PAL_N,
+   AVB_VIDEO_FORMAT_PAL_NC,
+   AVB_VIDEO_FORMAT_PAL_M,
+   AVB_VIDEO_FORMAT_PAL_60,
+   AVB_VIDEO_FORMAT_SECAM_L,
+   AVB_VIDEO_FORMAT_SECAM_LC,
+   AVB_VIDEO_FORMAT_SECAM_B,
+   AVB_VIDEO_FORMAT_SECAM_D,
+   AVB_VIDEO_FORMAT_SECAM_G,
+   AVB_VIDEO_FORMAT_SECAM_H,
+   AVB_VIDEO_FORMAT_SECAM_K
+};
+
+enum avb_audio_format
+{
+   AVB_AUDIO_FORMAT_NONE,
+   AVB_AUDIO_FORMAT_BTSC,
+   AVB_AUDIO_FORMAT_EIAJ,
+   AVB_AUDIO_FORMAT_A2,
+   AVB_AUDIO_FORMAT_NICAM,
+   AVB_AUDIO_FORMAT_FM_MONO,
+   AVB_AUDIO_FORMAT_FM_STEREO,
+   AVB_AUDIO_FORMAT_AM_MONO,
+   AVB_AUDIO_FORMAT_AM_STEREO
 };
 
 typedef struct
 {
+   avb_video_format video_format;
    uint64_t frequency_hz;
    uint32_t bandwidth_hz;
-   avb_format format;
+   avb_audio_format audio_format;
+   uint32_t audio_subcarrier_hz;
 } avb_channel;
 
 class avb_driver
