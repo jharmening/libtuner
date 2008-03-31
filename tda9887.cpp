@@ -25,12 +25,14 @@
  *
  */
 
+#include <sys/errno.h>
 #include "tda9887.h"
 
 #define TDA9887_REG_SWITCHING_MODE 0
 #define TDA9887_PORT2_DISABLE      (1 << 7)
 #define TDA9887_PORT1_DISABLE      (1 << 6)
 #define TDA9887_AUDIO_MUTE         (1 << 5)
+#define TDA9887_POS_AM_TV          0
 #define TDA9887_NEG_FM_TV          (1 << 4)
 #define TDA9887_FM_RADIO           (1 << 3)
 #define TDA9887_CARRIER_QSS        (1 << 2)
@@ -118,19 +120,56 @@ int tda9887::set_channel(const avb_channel &channel)
          m_buffer[3] = TDA9887_AUDIO_IF_6_0 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
          break;
       case AVB_FORMAT_PAL_D:
+      case AVB_FORMAT_PAL_D1:
       case AVB_FORMAT_PAL_K:
+      case AVB_FORMAT_SECAM_D:
+      case AVB_FORMAT_SECAM_K:
+      case AVB_FORMAT_SECAM_K1:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_6_5 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
          break;
+      case AVB_FORMAT_SECAM_B:
+      case AVB_FORMAT_SECAM_G:
+      case AVB_FORMAT_SECAM_H:
+         m_buffer[1] = TDA9887_POS_AM_TV | TDA9887_CARRIER_QSS;
+         m_buffer[2] = TDA9887_TOP_ADJUST(0);
+         m_buffer[3] = TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
+         break;
+      case AVB_FORMAT_SECAM_L:
+         m_buffer[1] = TDA9887_POS_AM_TV | TDA9887_CARRIER_QSS;
+         m_buffer[2] = TDA9887_TOP_ADJUST(0);
+         m_buffer[3] = TDA9887_AUDIO_IF_6_5 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
+         break;
+      case AVB_FORMAT_SECAM_LC:
+         m_buffer[1] = TDA9887_PORT2_DISABLE | TDA9887_POS_AM_TV | TDA9887_CARRIER_QSS;
+         m_buffer[2] = TDA9887_TOP_ADJUST(0);
+         m_buffer[3] = TDA9887_AUDIO_IF_6_5 | TDA9887_VIF_33_90 | TDA9887_AGC_L_STD_GATING;
+         break;
       default:
          LIBTUNERERR << "tda9887: Invalid broadcast format: " << channel.format << endl;
          return EINVAL;
+   }
+   if (m_port1 == TDA9887_PORT_ACTIVE)
+   {
+      m_buffer[1] &= ~(TDA9887_PORT1_DISABLE);
+   }
+   else if (m_port1 == TDA9887_PORT_INACTIVE)
+   {
+      m_buffer[1] |= TDA9887_PORT1_DISABLE;
+   }
+   if (m_port2 == TDA9887_PORT_ACTIVE)
+   {
+      m_buffer[1] &= ~(TDA9887_PORT2_DISABLE);
+   }
+   else if (m_port2 == TDA9887_PORT_INACTIVE)
+   {
+      m_buffer[1] |= TDA9887_PORT2_DISABLE;
    }
    return 0;
 }
 
 int tda9887::start(uint32_t timeout_ms)
 {
-   return m_device.write(buffer, sizeof(buffer));
+   return m_device.write(m_buffer, sizeof(m_buffer));
 }
