@@ -95,7 +95,7 @@ int tda9887::set_channel(const avb_channel &channel)
       case AVB_FORMAT_NTSC_J:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AUDIO_IF_4_5 | TDA9887_VIF_45_75 | TDA9887_AGC_L_STD_GATING;
+         m_buffer[3] = TDA9887_AUDIO_IF_4_5 | TDA9887_VIF_58_75 | TDA9887_AGC_L_STD_GATING;
          break;
       case AVB_FORMAT_NTSC_M:
       case AVB_FORMAT_NTSC_N:
@@ -104,7 +104,7 @@ int tda9887::set_channel(const avb_channel &channel)
       case AVB_FORMAT_PAL_NC:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AUDIO_IF_4_5 | TDA9887_VIF_58_75 | TDA9887_AGC_L_STD_GATING;
+         m_buffer[3] = TDA9887_AUDIO_IF_4_5 | TDA9887_VIF_45_75 | TDA9887_AGC_L_STD_GATING;
          break;
       case AVB_FORMAT_PAL_B:
       case AVB_FORMAT_PAL_G:

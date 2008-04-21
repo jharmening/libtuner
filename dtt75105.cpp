@@ -29,8 +29,8 @@
 
 dtt75105::dtt75105(tuner_config &config, tuner_device &device)
    : tuner_driver(config, device),
-     pll_driver(config, device, 36166667,
-         dtt75105_bands, (sizeof(dtt75105_bands) / sizeof(frequency_band)))
+     pll_driver(config, device, dtt75105_bands, 
+         (sizeof(dtt75105_bands) / sizeof(frequency_band)))
 {}
 
 dtt75105::~dtt75105(void) {}
@@ -46,7 +46,7 @@ const frequency_band dtt75105::dtt75105_bands[] =
 
 int dtt75105::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
-   int error = pll_driver::set_channel(channel, interface);
+   int error = set_frequency(channel.frequency_hz, 36166667);
    if (!error && (channel.bandwidth_hz == 7000000))
    {
       m_buffer[PLL_BANDSWITCH_BYTE] |= 0x10;

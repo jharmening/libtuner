@@ -31,32 +31,25 @@
 pll_driver::pll_driver(
    tuner_config &config,
    tuner_device &device,
-   uint32_t intermediate_frequency,
    const frequency_band *bands,
    size_t num_bands)
    : tuner_driver(config, device),
      dvb_driver(config, device),
      avb_driver(config, device),
      m_state(PLL_UNCONFIGURED),
-     m_frequency_hz(0),
-     m_intermediate_frequency(intermediate_frequency),
      m_bands(bands),
      m_num_bands(num_bands)
 {
 }
 
-int pll_driver::set_frequency(uint32_t frequency_hz)
+int pll_driver::set_frequency(uint32_t frequency_hz, uint32_t ifreq_hz)
 {
-   if ((m_state > PLL_UNCONFIGURED) && (frequency_hz == m_frequency_hz))
-   {
-      return 0;
-   }
    size_t i;
    for (i = 0; i < m_num_bands; ++i)
    {
       if ((m_bands[i].min_frequency <= frequency_hz) && (m_bands[i].max_frequency >= frequency_hz))
       {
-         uint32_t divider = (m_intermediate_frequency + frequency_hz) / m_bands[i].step_frequency;
+         uint32_t divider = (ifreq_hz + frequency_hz) / m_bands[i].step_frequency;
          m_buffer[0] = (uint8_t)(divider >> 8);
          m_buffer[1] = (uint8_t)(divider & 0xFF);
          m_buffer[2] = m_bands[i].control_byte;
@@ -69,19 +62,54 @@ int pll_driver::set_frequency(uint32_t frequency_hz)
    {
       return EINVAL;  
    }
-   m_frequency_hz = frequency_hz;
    m_state = PLL_CONFIGURED;
    return 0;
 }
 
 int pll_driver::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
-   return set_frequency(channel.frequency_hz);
+   return set_frequency(channel.frequency_hz, 44000000);
 }
 
 int pll_driver::set_channel(const avb_channel &channel)
 {
-   return set_frequency(channel.frequency_hz);  
+   uint32_t ifreq = 0;
+   switch (channel.format)
+   {
+      case AVB_FORMAT_NTSC_J:
+         ifreq = 58750000;
+         break;  
+      case AVB_FORMAT_NTSC_M:
+      case AVB_FORMAT_NTSC_N:
+      case AVB_FORMAT_NTSC_443:
+      case AVB_FORMAT_PAL_M:
+      case AVB_FORMAT_PAL_NC:
+         ifreq = 45750000;
+         break;
+      case AVB_FORMAT_PAL_B:
+      case AVB_FORMAT_PAL_G:
+      case AVB_FORMAT_PAL_H:
+      case AVB_FORMAT_PAL_N:
+      case AVB_FORMAT_PAL_I:
+      case AVB_FORMAT_PAL_D:
+      case AVB_FORMAT_PAL_D1:
+      case AVB_FORMAT_PAL_K:
+      case AVB_FORMAT_SECAM_D:
+      case AVB_FORMAT_SECAM_K:
+      case AVB_FORMAT_SECAM_K1:
+      case AVB_FORMAT_SECAM_B:
+      case AVB_FORMAT_SECAM_G:
+      case AVB_FORMAT_SECAM_H:
+      case AVB_FORMAT_SECAM_L:
+         ifreq = 38900000;
+         break;
+      case AVB_FORMAT_SECAM_LC:
+         ifreq = 33950000;
+         break;
+      default:
+         break;
+   }
+   return set_frequency(channel.frequency_hz, ifreq);  
 }
 
 int pll_driver::start(uint32_t timeout_ms)
@@ -155,6 +183,5 @@ void pll_driver::stop(void)
 void pll_driver::reset(void)
 {
    stop();
-   m_frequency_hz = 0;
    m_state = PLL_UNCONFIGURED;
 }

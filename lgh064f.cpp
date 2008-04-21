@@ -29,8 +29,8 @@
 
 lgh064f::lgh064f(tuner_config &config, tuner_device &device)
    : tuner_driver(config, device),
-     pll_driver(config, device, 44000000,
-         lgh064f_bands, (sizeof(lgh064f_bands) / sizeof(frequency_band)))
+     pll_driver(config, device, lgh064f_bands,
+         (sizeof(lgh064f_bands) / sizeof(frequency_band)))
 {}
 
 lgh064f::~lgh064f(void) {}

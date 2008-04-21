@@ -52,7 +52,6 @@ class pll_driver
       pll_driver(
          tuner_config &config,
          tuner_device &device,
-         uint32_t intermediate_frequency,
          const frequency_band *bands,
          size_t num_bands);
       
@@ -64,7 +63,7 @@ class pll_driver
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
       
       virtual int set_channel(const avb_channel &channel);
-
+            
       virtual int start(uint32_t timeout_ms);
 
       virtual void stop(void);
@@ -91,13 +90,11 @@ class pll_driver
       } m_state;
 
       uint8_t m_buffer[PLL_BUF_SIZE];
-      uint32_t m_frequency_hz;
-      
-      uint32_t m_intermediate_frequency;
       const frequency_band *m_bands;
       size_t m_num_bands;
+      
+      int set_frequency(uint32_t frequency_hz, uint32_t ifreq_hz);
 
-      int set_frequency(uint32_t frequency_hz);
 };
 
 #endif
