@@ -84,6 +84,16 @@ int tda9887::set_channel(const avb_channel &channel)
    {
       case AVB_FORMAT_FM_MONO:
          m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+         m_buffer[2] = TDA9887_TOP_ADJUST(0);
+         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+         break;
+      case AVB_FORMAT_FM_MONO_NON_USA:
+         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+         m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
+         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+         break;
+      case AVB_FORMAT_FM_MONO_USA:
+         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
          break;
@@ -91,7 +101,17 @@ int tda9887::set_channel(const avb_channel &channel)
          m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
-         break; 
+         break;
+      case AVB_FORMAT_FM_STEREO_NON_USA:
+         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+         m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
+         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+         break;
+      case AVB_FORMAT_FM_STEREO_USA:
+         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+         m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
+         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+         break;
       case AVB_FORMAT_NTSC_J:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
