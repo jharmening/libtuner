@@ -32,13 +32,15 @@ pll_driver::pll_driver(
    tuner_config &config,
    tuner_device &device,
    const frequency_band *bands,
-   size_t num_bands)
+   size_t num_bands,
+   uint32_t ifreq_hz)
    : tuner_driver(config, device),
      dvb_driver(config, device),
      avb_driver(config, device),
      m_state(PLL_UNCONFIGURED),
      m_bands(bands),
-     m_num_bands(num_bands)
+     m_num_bands(num_bands),
+     m_ifreq_hz(ifreq_hz)
 {
 }
 
@@ -68,48 +70,12 @@ int pll_driver::set_frequency(uint32_t frequency_hz, uint32_t ifreq_hz)
 
 int pll_driver::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
-   return set_frequency(channel.frequency_hz, 44000000);
+   return set_frequency(channel.frequency_hz, m_ifreq_hz);
 }
 
 int pll_driver::set_channel(const avb_channel &channel)
 {
-   uint32_t ifreq = 0;
-   switch (channel.format)
-   {
-      case AVB_FORMAT_NTSC_J:
-         ifreq = 58750000;
-         break;  
-      case AVB_FORMAT_NTSC_M:
-      case AVB_FORMAT_NTSC_N:
-      case AVB_FORMAT_NTSC_443:
-      case AVB_FORMAT_PAL_M:
-      case AVB_FORMAT_PAL_NC:
-         ifreq = 45750000;
-         break;
-      case AVB_FORMAT_PAL_B:
-      case AVB_FORMAT_PAL_G:
-      case AVB_FORMAT_PAL_H:
-      case AVB_FORMAT_PAL_N:
-      case AVB_FORMAT_PAL_I:
-      case AVB_FORMAT_PAL_D:
-      case AVB_FORMAT_PAL_D1:
-      case AVB_FORMAT_PAL_K:
-      case AVB_FORMAT_SECAM_D:
-      case AVB_FORMAT_SECAM_K:
-      case AVB_FORMAT_SECAM_K1:
-      case AVB_FORMAT_SECAM_B:
-      case AVB_FORMAT_SECAM_G:
-      case AVB_FORMAT_SECAM_H:
-      case AVB_FORMAT_SECAM_L:
-         ifreq = 38900000;
-         break;
-      case AVB_FORMAT_SECAM_LC:
-         ifreq = 33950000;
-         break;
-      default:
-         break;
-   }
-   return set_frequency(channel.frequency_hz, ifreq);  
+   return set_frequency(channel.frequency_hz, m_ifreq_hz);
 }
 
 int pll_driver::start(uint32_t timeout_ms)

@@ -30,7 +30,8 @@
 dtt7612::dtt7612(tuner_config &config, tuner_device &device)
    :  tuner_driver(config, device),
       pll_driver(config, device, dtt7612_bands, 
-         (sizeof(dtt7612_bands) / sizeof(frequency_band)))
+         (sizeof(dtt7612_bands) / sizeof(frequency_band)),
+         44000000)
 {}
       
 dtt7612::~dtt7612(void) {}
