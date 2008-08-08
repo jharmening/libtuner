@@ -5,14 +5,16 @@ CXXFLAGS+= -D_DIAGNOSTIC
 .endif
 
 BASE = pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o
-DRIVERS = dtt7612.o lgh064f.o or51132.o lg3303.o dtt75105.o cx22702.o tda9887.o
+DRIVERS = dtt7612.o dtt7579.o lgh064f.o or51132.o lg3303.o dtt75105.o fmd1216me.o cx22702.o tda9887.o
 
 all: $(BASE) $(DRIVERS)
 	g++ -o libtuner.so -Wall -O2 -fPIC -shared *.o
 
 tda9887.o: avb_driver.h tuner_device.o tuner_config.o tda9887.h tda9887.cpp
+fmd1216me.o: pll_driver.o fmd1216me.h fmd1216me.cpp
 dtt75105.o: pll_driver.o dtt75105.h dtt75105.cpp
 dtt7612.o: pll_driver.o dtt7612.h dtt7612.cpp
+dtt7579.o: pll_driver.o dtt7579.h dtt7579.cpp
 lgh064f.o: pll_driver.o lgh064f.h lgh064f.cpp
 or51132.o: dvb_driver.h tuner_device.o tuner_config.o tuner_firmware.o or51132.h or51132.cpp
 lg3303.o: dvb_driver.h tuner_device.o tuner_config.o lg3303.h lg3303.cpp
