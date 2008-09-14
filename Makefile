@@ -1,5 +1,9 @@
 CXXFLAGS = -O2 -Wall -fPIC
 
+LIBTUNER_MAJOR ?= 1
+LIBTUNER_MINOR ?= 0
+LIBTUNER_REV ?= 0
+
 .if defined(DIAGNOSTIC)
 CXXFLAGS+= -D_DIAGNOSTIC
 .endif
@@ -8,7 +12,10 @@ BASE = pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o
 DRIVERS = dtt7612.o dtt7579.o lgh064f.o or51132.o lg3303.o dtt75105.o fmd1216me.o cx22702.o tda9887.o
 
 all: $(BASE) $(DRIVERS)
-	g++ -o libtuner.so -Wall -O2 -fPIC -shared *.o
+	g++ -o libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) -Wall -O2 -fPIC -shared -soname libtuner.$(LIBTUNER_MAJOR) *.o
+	ln -sf libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR)
+	ln -sf libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR) libtuner.so.$(LIBTUNER_MAJOR)
+	ln -sf libtuner.so.$(LIBTUNER_MAJOR) libtuner.so
 
 tda9887.o: avb_driver.h tuner_device.o tuner_config.o tda9887.h tda9887.cpp
 fmd1216me.o: pll_driver.o fmd1216me.h fmd1216me.cpp
@@ -27,4 +34,4 @@ tuner_firmware.o: tuner_firmware.h tuner_firmware.cpp
 tuner_config.o: tuner_config.h tuner_config.cpp
 
 clean:
-	rm -f *.o *.so
+	rm -f *.o *.so*
