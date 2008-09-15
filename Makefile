@@ -13,7 +13,7 @@ BASE = pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o
 DRIVERS = dtt7612.o dtt7579.o lgh064f.o or51132.o lg3303.o dtt75105.o fmd1216me.o cx22702.o tda9887.o
 
 all: $(BASE) $(DRIVERS)
-	g++ -o libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) -Wall -O2 -fPIC -shared -soname libtuner.$(LIBTUNER_MAJOR) *.o
+	g++ -o libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) -Wall -O2 -fPIC -shared -soname libtuner.so.$(LIBTUNER_MAJOR) *.o
 	ln -sf libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR)
 	ln -sf libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR) libtuner.so.$(LIBTUNER_MAJOR)
 	ln -sf libtuner.so.$(LIBTUNER_MAJOR) libtuner.so
