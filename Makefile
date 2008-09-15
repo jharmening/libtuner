@@ -3,6 +3,7 @@ CXXFLAGS = -O2 -Wall -fPIC
 LIBTUNER_MAJOR ?= 1
 LIBTUNER_MINOR ?= 0
 LIBTUNER_REV ?= 0
+INSTALLDIR ?= /usr/local
 
 .if defined(DIAGNOSTIC)
 CXXFLAGS+= -D_DIAGNOSTIC
@@ -32,6 +33,12 @@ tuner_devnode_device.o: tuner_device.o tuner_devnode_device.h tuner_devnode_devi
 tuner_device.o: tuner_device.h tuner_device.cpp
 tuner_firmware.o: tuner_firmware.h tuner_firmware.cpp
 tuner_config.o: tuner_config.h tuner_config.cpp
+
+install: all
+	mkdir $(INSTALLDIR)/lib/libtuner
+	mkdir $(INSTALLDIR)/include/libtuner
+	cp -R libtuner.so* $(INSTALLDIR)/lib/libtuner/
+	cp *.h $(INSTALLDIR)/include/libtuner/
 
 clean:
 	rm -f *.o *.so*
