@@ -35,8 +35,8 @@ tuner_firmware.o: tuner_firmware.h tuner_firmware.cpp
 tuner_config.o: tuner_config.h tuner_config.cpp
 
 install: all
-	mkdir $(INSTALLDIR)/lib/libtuner
-	mkdir $(INSTALLDIR)/include/libtuner
+	mkdir -p $(INSTALLDIR)/lib/libtuner
+	mkdir -p $(INSTALLDIR)/include/libtuner
 	cp -R libtuner.so* $(INSTALLDIR)/lib/libtuner/
 	cp *.h $(INSTALLDIR)/include/libtuner/
 
