@@ -8,7 +8,7 @@ LIBTUNER_REV ?= 0
 INSTALLDIR ?= /usr/local
 
 .if defined(DIAGNOSTIC)
-CXXFLAGS+= -D_DIAGNOSTIC
+CXXFLAGS+= -g -D_DIAGNOSTIC
 .endif
 
 BASE = pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o

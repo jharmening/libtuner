@@ -51,7 +51,6 @@ class or51132
 
    private:
       
-      tuner_config &m_config;
       uint8_t m_mode;
 
       uint8_t get_mode(uint8_t &status);

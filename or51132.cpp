@@ -49,8 +49,7 @@
 
 or51132::or51132(tuner_config &config, tuner_device &device)
    : tuner_driver(config, device),
-     dvb_driver(config, device),
-     m_config(config)
+     dvb_driver(config, device)
 {
    uint8_t status = 0;
    m_mode = get_mode(status);
