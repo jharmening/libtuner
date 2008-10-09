@@ -316,7 +316,7 @@ int or51132::start(uint32_t timeout_ms)
          break;
       }
       usleep(20000);
-      time_slept += 20;
+      time_slept += 50;
    } while (time_slept < timeout_ms);
    if (!locked)
    {
