@@ -38,8 +38,6 @@
 
 #define OR51132_VSB_CONFIG_KEY "OR51132_VSB_FW"
 #define OR51132_QAM_CONFIG_KEY "OR51132_QAM_FW"
-#define OR51132_DELAY_KEY "OR51132_DELAY"
-#define OR51132_DEFAULT_DELAY 500000
 
 #define OR51132_MODE_UNKNOWN  0x00
 #define OR51132_MODE_VSB      0x06
@@ -304,7 +302,7 @@ int or51132::start(uint32_t timeout_ms)
    }
    usleep(30000);
    uint8_t status = 0;
-   uint32_t time_slept = 0;
+   uint32_t time_slept = 30;
    bool locked = false;
    do
    {
@@ -318,21 +316,12 @@ int or51132::start(uint32_t timeout_ms)
          break;
       }
       usleep(20000);
-      time_slept += 50;
+      time_slept += 20;
    } while (time_slept < timeout_ms);
    if (!locked)
    {
       LIBTUNERERR << "OR51132: demodulator not locked" << endl;
       return ETIMEDOUT;
-   }
-   else
-   {
-      unsigned int delay = m_config.get_number<unsigned int>(OR51132_DELAY_KEY);
-      if (delay == 0)
-      {
-         delay = OR51132_DEFAULT_DELAY;
-      }
-      usleep(delay);
    }
    return 0;
 }
