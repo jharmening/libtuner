@@ -48,7 +48,6 @@
 #define XC3028_FWFLAG_MONO          (1 << 14)
 #define XC3028_FWFLAG_FORMAT        (1 << 15)        
 #define XC3028_FWFLAG_IFREQ         (1 << 16)
-#define XC3028_FWFLAG_IFREQ_OFFSET  (1 << 17)
 
 class xc3028
    : public dvb_driver,
@@ -59,11 +58,11 @@ class xc3028
       typedef struct
       {
          uint32_t flags;
+         int32_t freq_adjust_hz;
+         uint16_t size;
          uint16_t format;
          uint32_t ifreq_hz;
-         uint32_t ifreq_offset_hz;
          void *data;
-         size_t size;
       } xc3028_fw_header;
       
       enum xc3028_event_t
@@ -79,6 +78,7 @@ class xc3028
          tuner_device &device,
          xc3028_callback_t callback,
          void *callback_context,
+         int &error,
          uint32_t firmware_flags = 0,
          uint32_t ifreq_hz = 0);
 
@@ -103,7 +103,7 @@ class xc3028
       uint16_t m_format;
       tuner_firmware *m_firmware;
       xc3028_fw_header *m_fw_segs;
-      size_t m_num_segs;
+      uint16_t m_num_segs;
 
 };
 

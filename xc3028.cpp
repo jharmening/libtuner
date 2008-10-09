@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
@@ -55,6 +54,7 @@ xc3028::xc3028(
    tuner_device &device,
    xc3028_callback_t callback,
    void *callback_context,
+   int &error,
    uint32_t firmware_flags, // = 0
    uint32_t ifreq_hz /*= 0*/)
    : tuner_driver(config, device),
@@ -69,8 +69,66 @@ xc3028::xc3028(
      m_fw_segs(NULL),
      m_num_segs(0)
 {
-   uint8_t status = 0;
-   m_mode = get_mode(status);
+   if (error)
+   {
+      return;
+   }
+   const char *fwfile = m_config.get_string(XC3028_FW_KEY);
+   if (fwfile == NULL)
+   {
+      LIBTUNERERR << "XC3028 firmware file not configured" << endl;
+      return ENOENT;
+   }
+   m_firmware = new tuner_firmware(fwfile, error);
+   if (m_firmware == NULL)
+   {
+      error = ENOMEM;
+   }
+   if ((error) || (m_firmware->length() > sizeof(m_num_segs)))
+   {
+      return;
+   }
+   char *buf = reinterpret_cast<char*>(m_firmware->buffer());
+   char *end = buf + m_firmware->length();
+   uint16_t segindex = 0;
+   m_num_segs = le16toh(*(reinterpret_cast<uint16_t*>(buf)));
+   m_fw_segs = new xc3028_fw_header[m_num_segs];
+   if (m_fw_segs == NULL)
+   {
+      error = ENOMEM;
+      return;
+   }
+   buf += sizeof(uint16_t);
+   while (((buf + sizeof(xc3028_fw_header)) <= m_firmware->length()) && (segindex < m_num_segs))
+   {
+      m_fw_segs[segindex].flags = le32toh(*(reinterpret_cast<uint32_t*>(buf)));
+      m_fw_segs[segindex].freq_offset_hz = static_cast<uint32_t> (le32toh(*(reinterpret_cast<uint32_t*> (buf))));
+      m_fw_segs[segindex].size = le16toh(*(reinterpret_cast<uint16_t*> (buf)));
+      buf += (sizeof(uint32_t) + sizeof(int32_t) + sizeof(uint16_t));
+      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_FORMAT)
+      {
+         m_fw_segs[segindex].format = le16toh(*(reinterpret_cast<uint16_t*> (buf)));
+         buf += sizeof(uint16_t);
+      }
+      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_IFREQ)
+      {
+         m_fw_segs[segindex].ifreq_hz = le32toh(*(reinterpret_cast<uint32_t*> (buf)));
+         buf += sizeof(uint32_t);
+      }
+      if ((buf + size) > end)
+      {
+         LIBTUNERERR << "xc3028: size of firmware " << segindex << " extends beyond end of file" << endl;
+         error = EINVAL;
+         return;
+      }
+      buf += size;
+      ++segindex;  
+   }
+   if (segindex < m_num_segs)
+   {
+      LIBTUNERERR << "xc3028: corrupt firmware; found " << segindex << " images, expected " << m_num_segs << endl;
+      error = EINVAL;
+   }
 }
 
 xc3028::~xc3028(void)
