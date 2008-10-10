@@ -36,9 +36,7 @@
 #include "tuner_firmware.h"
 #include "xc3028.h"
 
-#define XC3028_FW_KEY "XC3028_FW"
-#define XC3028_DELAY_KEY "XC3028_DELAY"
-#define XC3028_DEFAULT_DELAY 500000
+#define XC3028_FW_KEY        "XC3028_FW"
 
 #define XC3028_MODE_UNKNOWN  0x00
 #define XC3028_MODE_VSB      0x06
@@ -49,10 +47,13 @@
 #define XC3028_MIN_FREQ      42000000
 #define XC3028_MAX_FREQ      864000000
 
+#define XC3028_7MHZ_UHF_FREQ 470000000
+#define XC3028_DIVIDER       15625
+
 xc3028::xc3028(
    tuner_config &config,
    tuner_device &device,
-   xc3028_callback_t callback,
+   xc3028_reset_callback_t callback,
    void *callback_context,
    int &error,
    uint32_t firmware_flags, // = 0
@@ -61,13 +62,17 @@ xc3028::xc3028(
      dvb_driver(config, device),
      avb_driver(config, device),
      m_callback(callback),
-     m_frequency_hz(0),
-     m_ifreq_hz(0),
-     m_flags(firmware_flags),
-     m_format(0),
+     m_callback_context(callback_context),
      m_firmware(NULL),
      m_fw_segs(NULL),
-     m_num_segs(0)
+     m_current_fw(NULL),
+     m_frequency_hz(0),
+     m_ifreq_hz(0),
+     m_default_flags(firmware_flags),
+     m_flags(0),
+     m_format(0),
+     m_num_segs(0),
+     m_num_base_images(0)
 {
    if (error)
    {
@@ -102,13 +107,21 @@ xc3028::xc3028(
    while (((buf + sizeof(xc3028_fw_header)) <= m_firmware->length()) && (segindex < m_num_segs))
    {
       m_fw_segs[segindex].flags = le32toh(*(reinterpret_cast<uint32_t*>(buf)));
-      m_fw_segs[segindex].freq_offset_hz = static_cast<uint32_t> (le32toh(*(reinterpret_cast<uint32_t*> (buf))));
       m_fw_segs[segindex].size = le16toh(*(reinterpret_cast<uint16_t*> (buf)));
-      buf += (sizeof(uint32_t) + sizeof(int32_t) + sizeof(uint16_t));
-      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_FORMAT)
+      buf += (sizeof(uint32_t) + sizeof(uint16_t));
+      if ((m_num_base_images == 0) && !(m_fw_segs[segindex].flags & XC3028_FWFLAG_BASE))
       {
-         m_fw_segs[segindex].format = le16toh(*(reinterpret_cast<uint16_t*> (buf)));
-         buf += sizeof(uint16_t);
+         m_num_base_images = segindex;
+      }
+      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_VIDEO_FORMAT)
+      {
+         m_fw_segs[segindex].video_format = le32toh(*(reinterpret_cast<uint32_t*> (buf)));
+         buf += sizeof(uint32_t);
+      }
+      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_AUDIO_FORMAT)
+      {
+         m_fw_segs[segindex].audio_format = le32toh(*(reinterpret_cast<uint32_t*> (buf)));
+         buf += sizeof(uint32_t); 
       }
       if (m_fw_segs[segindex].flags & XC3028_FWFLAG_IFREQ)
       {

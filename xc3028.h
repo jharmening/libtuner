@@ -42,12 +42,14 @@
 #define XC3028_FWFLAG_NO_GROUP_DEL  (1 << 8)
 #define XC3028_FWFLAG_6MHZ_DTV      (1 << 9)
 #define XC3028_FWFLAG_7MHZ_DTV      (1 << 10)
-#define XC3028_FWFLAG_8MHZ_DTV      (1 << 11)
-#define XC3028_FWFLAG_VSB           (1 << 12)
-#define XC3028_FWFLAG_QAM           (1 << 13)
-#define XC3028_FWFLAG_MONO          (1 << 14)
-#define XC3028_FWFLAG_FORMAT        (1 << 15)        
-#define XC3028_FWFLAG_IFREQ         (1 << 16)
+#define XC3028_FWFLAG_7MHZ_VHF_DTV  (1 << 11)
+#define XC3028_FWFLAG_8MHZ_DTV      (1 << 12)
+#define XC3028_FWFLAG_VSB           (1 << 13)
+#define XC3028_FWFLAG_QAM           (1 << 14)
+#define XC3028_FWFLAG_MONO          (1 << 15)
+#define XC3028_FWFLAG_VIDEO_FORMAT  (1 << 16)
+#define XC3028_FWFLAG_AUDIO_FORMAT  (1 << 17)
+#define XC3028_FWFLAG_IFREQ         (1 << 18)
 
 class xc3028
    : public dvb_driver,
@@ -58,25 +60,19 @@ class xc3028
       typedef struct
       {
          uint32_t flags;
-         int32_t freq_adjust_hz;
          uint16_t size;
-         uint16_t format;
+         uint32_t video_format;
+         uint32_t audio_format;
          uint32_t ifreq_hz;
          void *data;
       } xc3028_fw_header;
-      
-      enum xc3028_event_t
-      {
-         XC3028_EVENT_RESET_TUNER,
-         XC3028_EVENT_RESET_CLOCK
-      };
-
-      typedef int (*xc3028_callback_t) (xc3028_event_t, void*);
+            
+      typedef int (*xc3028_reset_callback_t) (void*);
       
       xc3028(
          tuner_config &config,
          tuner_device &device,
-         xc3028_callback_t callback,
+         xc3028_reset_callback_t callback,
          void *callback_context,
          int &error,
          uint32_t firmware_flags = 0,
@@ -96,14 +92,19 @@ class xc3028
 
    private:
 
-      xc3028_callback_t m_callback;
-      uint32_t m_frequency_hz;
-      uint32_t m_ifreq_hz;
-      uint32_t m_flags;
-      uint16_t m_format;
+      xc3028_reset_callback_t m_callback;
+      void *m_callback_context;
       tuner_firmware *m_firmware;
       xc3028_fw_header *m_fw_segs;
+      xc3028_fw_header *m_current_fw;
+      uint32_t m_frequency_hz;
+      uint32_t m_ifreq_hz;
+      uint32_t m_default_flags;
+      uint32_t m_flags;
+      uint32_t m_video_format;
+      uint32_t m_audio_format;
       uint16_t m_num_segs;
+      uint16_t m_num_base_images;
 
 };
 
