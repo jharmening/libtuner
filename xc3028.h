@@ -1,6 +1,6 @@
 /*-
  * xc3028.h 
- *  Copyright 2008 Fritz Katz
+ *  Copyright 2008 Fritz Katz, Jason Harmening
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
