@@ -80,94 +80,104 @@ tda9887::tda9887(
 
 int tda9887::set_channel(const avb_channel &channel)
 {
-   switch (channel.format)
+   switch (channel.video_format)
    {
-      case AVB_FORMAT_FM_MONO:
-         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
-         m_buffer[2] = TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+      case AVB_VIDEO_FMT_NONE:
+      {
+         switch (channel.audio_format)
+         {
+            case AVB_AUDIO_FMT_FM_MONO:
+               m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+               m_buffer[2] = TDA9887_TOP_ADJUST(0);
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               break;
+            case AVB_AUDIO_FMT_FM_MONO_NON_USA:
+               m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+               m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               break;
+            case AVB_AUDIO_FMT_FM_MONO_USA:
+               m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+               m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_TOP_ADJUST(0);
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               break;
+            case AVB_AUDIO_FMT_FM_STEREO:
+               m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+               m_buffer[2] = TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               break;
+            case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
+               m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+               m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               break;
+            case AVB_AUDIO_FMT_FM_STEREO_USA:
+               m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
+               m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               break;
+            default:
+               LIBTUNERERR << "tda9887: Invalid broadcast audio format: " << channel.audio_format << endl;
+               return EINVAL;
+         }
          break;
-      case AVB_FORMAT_FM_MONO_NON_USA:
-         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
-         m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
-         break;
-      case AVB_FORMAT_FM_MONO_USA:
-         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
-         m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
-         break;
-      case AVB_FORMAT_FM_STEREO:
-         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
-         m_buffer[2] = TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
-         break;
-      case AVB_FORMAT_FM_STEREO_NON_USA:
-         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
-         m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
-         break;
-      case AVB_FORMAT_FM_STEREO_USA:
-         m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
-         m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
-         m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
-         break;
-      case AVB_FORMAT_NTSC_J:
+      }
+      case AVB_VIDEO_FMT_NTSC_J:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_4_5 | TDA9887_VIF_58_75 | TDA9887_AGC_L_STD_GATING;
          break;
-      case AVB_FORMAT_NTSC_M:
-      case AVB_FORMAT_NTSC_N:
-      case AVB_FORMAT_NTSC_443:
-      case AVB_FORMAT_PAL_M:
-      case AVB_FORMAT_PAL_NC:
+      case AVB_VIDEO_FMT_NTSC_M:
+      case AVB_VIDEO_FMT_NTSC_N:
+      case AVB_VIDEO_FMT_NTSC_443:
+      case AVB_VIDEO_FMT_PAL_M:
+      case AVB_VIDEO_FMT_PAL_NC:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_4_5 | TDA9887_VIF_45_75 | TDA9887_AGC_L_STD_GATING;
          break;
-      case AVB_FORMAT_PAL_B:
-      case AVB_FORMAT_PAL_G:
-      case AVB_FORMAT_PAL_H:
-      case AVB_FORMAT_PAL_N:
+      case AVB_VIDEO_FMT_PAL_B:
+      case AVB_VIDEO_FMT_PAL_G:
+      case AVB_VIDEO_FMT_PAL_H:
+      case AVB_VIDEO_FMT_PAL_N:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
          break;
-      case AVB_FORMAT_PAL_I:
+      case AVB_VIDEO_FMT_PAL_I:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_6_0 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
          break;
-      case AVB_FORMAT_PAL_D:
-      case AVB_FORMAT_PAL_D1:
-      case AVB_FORMAT_PAL_K:
-      case AVB_FORMAT_SECAM_D:
-      case AVB_FORMAT_SECAM_K:
-      case AVB_FORMAT_SECAM_K1:
+      case AVB_VIDEO_FMT_PAL_D:
+      case AVB_VIDEO_FMT_PAL_D1:
+      case AVB_VIDEO_FMT_PAL_K:
+      case AVB_VIDEO_FMT_SECAM_D:
+      case AVB_VIDEO_FMT_SECAM_K:
+      case AVB_VIDEO_FMT_SECAM_K1:
          m_buffer[1] = TDA9887_NEG_FM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_6_5 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
          break;
-      case AVB_FORMAT_SECAM_B:
-      case AVB_FORMAT_SECAM_G:
-      case AVB_FORMAT_SECAM_H:
+      case AVB_VIDEO_FMT_SECAM_B:
+      case AVB_VIDEO_FMT_SECAM_G:
+      case AVB_VIDEO_FMT_SECAM_H:
          m_buffer[1] = TDA9887_POS_AM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
          break;
-      case AVB_FORMAT_SECAM_L:
+      case AVB_VIDEO_FMT_SECAM_L:
          m_buffer[1] = TDA9887_POS_AM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_6_5 | TDA9887_VIF_38_90 | TDA9887_AGC_L_STD_GATING;
          break;
-      case AVB_FORMAT_SECAM_LC:
+      case AVB_VIDEO_FMT_SECAM_LC:
          m_buffer[1] = TDA9887_PORT2_DISABLE | TDA9887_POS_AM_TV | TDA9887_CARRIER_QSS;
          m_buffer[2] = TDA9887_TOP_ADJUST(0);
          m_buffer[3] = TDA9887_AUDIO_IF_6_5 | TDA9887_VIF_33_90 | TDA9887_AGC_L_STD_GATING;
          break;
       default:
-         LIBTUNERERR << "tda9887: Invalid broadcast format: " << channel.format << endl;
+         LIBTUNERERR << "tda9887: Invalid broadcast video format: " << channel.video_format << endl;
          return EINVAL;
    }
    if (m_port1 == TDA9887_PORT_ACTIVE)

@@ -57,10 +57,12 @@ class tuner_config
       
       int load_string(const char *str);
       
+      int load_string(const char *str, char line_delim);
+      
       const char *get_string(const char *key);
-
+            
       template <typename numtype> 
-      numtype get_number(const char *key)
+      numtype get_number(const char *key, numtype default_val)
       {
          const char *str = get_string(key);
          if (str != NULL)
@@ -73,8 +75,14 @@ class tuner_config
          }
          else
          {
-            return ((numtype)0);
+            return default_val;
          }
+      }
+      
+      template <typename numtype> 
+      numtype get_number(const char *key)
+      {
+         return get_number<numtype>(key, (numtype)0);
       }
       
       int add_config(tuner_config &config);
@@ -84,7 +92,7 @@ class tuner_config
 
    private:
       
-      int load(istream &stream);
+      int load(istream &stream, char line_delim = '\n');
       
       const char *get_config_string(const char *key);
         

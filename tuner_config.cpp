@@ -35,7 +35,7 @@ using namespace std;
 #define WHITESPACE " \t"
 #define DELIMS WHITESPACE"="
 
-int tuner_config::load(istream &stream)
+int tuner_config::load(istream &stream, char line_delim)
 {
    if (m_next != NULL)
    {
@@ -48,7 +48,7 @@ int tuner_config::load(istream &stream)
       int lineno = 0;
       while (!stream.eof())
       {
-         getline(stream, line);
+         getline(stream, line, line_delim);
          ++lineno;
          string::size_type token_begin, token_end;
          token_begin = line.find_first_not_of(WHITESPACE);
@@ -104,6 +104,13 @@ int tuner_config::load_string(const char *str)
    string s(str);
    istringstream strstream(s);
    return load(strstream);
+}
+
+int tuner_config::load_string(const char *str, char line_delim)
+{
+   string s(str);
+   istringstream strstream(s);
+   return load(strstream, line_delim);
 }
 
 const char *tuner_config::get_string(const char *key)
