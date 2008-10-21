@@ -37,16 +37,8 @@
 #include "xc3028.h"
 
 #define XC3028_FW_KEY        "XC3028_FW"
-
-#define XC3028_MODE_UNKNOWN  0x00
-#define XC3028_MODE_VSB      0x06
-#define XC3028_MODE_QAM64    0x43
-#define XC3028_MODE_QAM256   0x45
-#define XC3028_MODE_QAM_AUTO 0x4F
-
 #define XC3028_MIN_FREQ      42000000
 #define XC3028_MAX_FREQ      864000000
-
 #define XC3028_7MHZ_UHF_FREQ 470000000
 #define XC3028_DIVIDER       15625
 
@@ -67,7 +59,7 @@ xc3028::xc3028(
      m_fw_segs(NULL),
      m_current_fw(NULL),
      m_frequency_hz(0),
-     m_ifreq_hz(0),
+     m_ifreq_hz(ifreq_hz),
      m_default_flags(firmware_flags),
      m_flags(0),
      m_format(0),
@@ -89,7 +81,7 @@ xc3028::xc3028(
    {
       error = ENOMEM;
    }
-   if ((error) || (m_firmware->length() > sizeof(m_num_segs)))
+   if (error) || (m_firmware->length() < sizeof(*m_fw_segs)))
    {
       return;
    }
