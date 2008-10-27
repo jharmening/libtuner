@@ -39,7 +39,7 @@ int tuner_config::load(istream &stream, char line_delim)
 {
    if (m_next != NULL)
    {
-      return m_next->load(stream);  
+      return m_next->load(stream, line_delim);  
    }
    int error = 0;
    try

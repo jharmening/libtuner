@@ -80,9 +80,9 @@ enum avb_audio_fmt_t
    AVB_AUDIO_FMT_NICAM_SAP
 };
 
-#define AVB_FORMAT_IS_NTSC(fmt) (fmt <= AVB_FORMAT_NTSC_443)
-#define AVB_FORMAT_IS_PAL(fmt) ((fmt >= AVB_FORMAT_PAL_B) && (fmt <= AVB_FORMAT_PAL_60))
-#define AVB_FORMAT_IS_SECAM(fmt) ((fmt >= AVB_FORMAT_SECAM_L) && (fmt <= AVB_FORMAT_SECAM_K1))
+#define AVB_FORMAT_IS_NTSC(fmt) (fmt <= AVB_VIDEO_FMT_NTSC_443)
+#define AVB_FORMAT_IS_PAL(fmt) ((fmt >= AVB_VIDEO_FMT_PAL_B) && (fmt <= AVB_VIDEO_FMT_PAL_60))
+#define AVB_FORMAT_IS_SECAM(fmt) ((fmt >= AVB_VIDEO_FMT_SECAM_L) && (fmt <= AVB_VIDEO_FMT_SECAM_K1))
 
 typedef struct
 {
