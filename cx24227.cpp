@@ -25,6 +25,7 @@
  *
  */
 
+#include <sys/errno.h>
 #include "cx24227.h"
 
 #define CX24227_VSB_IFREQ 5380000
@@ -32,18 +33,19 @@
 cx24227::cx24227(
    tuner_config &config, 
    tuner_device &device,
-   dvb_interface &interface,
+   dvb_input_t input,
    cx24227_qam_if_t qam_ifreq_hz,
    cx24227_gpio_t gpio,
+   cx24227_clock_t clock,
    int &error)
    : tuner_driver(config, device),
      dvb_driver(config, device),
-     m_interface(interface),
+     m_input(input),
      m_inversion(DVB_INVERSION_OFF),
      m_modulation(DVB_MOD_VSB_8),
      m_qam_ifreq(qam_ifreq_hz)
 {
-   static const uint8_t config[] = 
+   static const uint8_t init_config[] = 
    {
    // Reg      Val HI   Val LO
       0xF2,    0x00,    0x00,
@@ -96,34 +98,34 @@ cx24227::cx24227(
    };
    if (!error)
    {
-      error = m_device.write_array(config, 3, sizeof(config));
+      error = m_device.write_array(init_config, 3, sizeof(init_config));
    }
    if (!error)
    {
       uint8_t output_mode[3];
       output_mode[0] = 0xAB;
-      error = m_device.transact(&output_mode, 1, &(output_mode[1]), 2);
+      error = m_device.transact(output_mode, 1, &(output_mode[1]), 2);
       if (!error)
       {
-         if ((interface.input_width_bits == DVB_INPUT_SERIAL) && !(output_mode[1] & 0x01))
+         if ((input == DVB_INPUT_SERIAL) && !(output_mode[1] & 0x01))
          {
             output_mode[1] |= 0x01;
             error = m_device.write(output_mode, 3);
          }
-         else if ((interface.input_width_bits != DVB_INPUT_SERIAL) && (output_mode[1] & 0x01))
+         else if ((input != DVB_INPUT_SERIAL) && (output_mode[1] & 0x01))
          {
             output_mode[1] &= 0xFE;
             error = m_device.write(output_mode, 3);
          }
       }
    }
-   error = (error ? (error : set_inversion()));
-   error = (error ? (error : set_ifreq()));
+   error = (error ? error : set_inversion());
+   error = (error ? error : set_ifreq());
    if (!error)
    {
       uint8_t gpio_config[3];
       gpio_config[0] = 0xE3;
-      error = m_device.transact(&gpio_config, 1, &(gpio_config[1]), 2);
+      error = m_device.transact(gpio_config, 1, &(gpio_config[1]), 2);
       if (!error)
       {
          if ((gpio == CX24227_GPIO_ENABLE) && ((gpio_config[1] & 0x11) != 0x11))
@@ -138,6 +140,19 @@ cx24227::cx24227(
          }
       }
    }
+   if (!error)
+   {
+      uint8_t timing[3];
+      timing[0] = 0xAC;
+      error = m_device.transact(timing, 1, &(timing[1]), 2);
+      if (!error)
+      {
+         timing[1] &= 0xCF;
+			timing[1] |= (clock << 4);
+         error = m_device.write(timing, 3);
+      }
+   }
+   reset();
    if (!error)
    {
       static const uint8_t i2c_gate[] = {0xF3, 0x00, 0x01};
@@ -186,4 +201,185 @@ int cx24227::set_ifreq(void)
    {
       return m_device.write_array(ifreq_default, 3, sizeof(ifreq_default));
    }
+}
+
+void cx24227::reset(void)
+{
+   uint8_t reset_msg[3];
+   reset_msg[0] = 0xF5;
+   reset_msg[1] = 0;
+   reset_msg[2] = 0;
+   if (m_device.write(reset_msg, sizeof(reset_msg)) == 0)
+   {
+      reset_msg[2] = 1;
+      m_device.write(reset_msg, sizeof(reset_msg));	
+   }
+}
+
+int cx24227::qam_optimize(void)
+{
+   uint8_t qam_lock_stat[2];
+   static uint8_t eq_stat = 0xF0;
+   static uint8_t master_stat = 0xF1;
+   int error = m_device.transact(&eq_stat, 1, qam_lock_stat, 2);
+   if (error)
+   {
+      return error;
+   }
+   uint8_t amhum_config[] = 
+   {
+      0x96, 0x00, 0x08,
+      0x93, 0x33, 0x32,
+      0x9E, 0x2C, 0x37
+   };
+   if (qam_lock_stat[0] & 0x20)
+   {
+      amhum_config[2] = 0x0C;
+      if ((qam_lock_stat[1] >= 0x38) && (qam_lock_stat[1] <= 0x68))
+      {
+         amhum_config[4] = 0x31;
+         amhum_config[5] = 0x30;
+         amhum_config[7] = 0x28;
+         amhum_config[8] = 0x36;
+      }
+   }
+   m_device.write_array(amhum_config, 3, sizeof(amhum_config));
+   error = m_device.transact(&master_stat, 1, qam_lock_stat, 2);
+   if (error)
+   {
+      return error;
+   }
+   if (qam_lock_stat[0] & 0x80)
+   {
+      uint8_t interleave_config[] = {0x96, 0x00, 0x20};
+      m_device.write(interleave_config, sizeof(interleave_config));
+      interleave_config[0] = 0xB2;
+      m_device.transact(interleave_config, 1, &(interleave_config[1]), 2);
+      uint8_t temp = interleave_config[1] >> 4;
+      interleave_config[0] = 0xAD;
+      m_device.transact(interleave_config, 1, &(interleave_config[1]), 2);
+      interleave_config[1] = (interleave_config[1] & 0xF0) | temp;
+      m_device.write(interleave_config, sizeof(interleave_config));
+      interleave_config[0] = 0xAB;
+      m_device.transact(interleave_config, 1, &(interleave_config[1]), 2);
+      interleave_config[1] &= 0xEF;
+      interleave_config[2] &= 0xFE;
+      m_device.write(interleave_config, sizeof(interleave_config));
+   }
+   else
+   {
+      uint8_t interleave_config[] = {0x96, 0x00, 0x08};
+      m_device.write(interleave_config, sizeof(interleave_config));
+      interleave_config[0] = 0xAB;
+      m_device.transact(interleave_config, 1, &(interleave_config[1]), 2);
+      interleave_config[1] |= 0x10;
+      interleave_config[2] &= 0x01;
+      m_device.write(interleave_config, sizeof(interleave_config));
+   }
+   return error;
+}
+
+int cx24227::set_channel(const dvb_channel &channel, dvb_interface &interface)
+{
+   reset();
+   int error = 0;
+   static uint8_t vsb_config[] = {0xF4, 0x00, 0x00};
+   static uint8_t qam_config[] = 
+   {
+      0xF4, 0x00, 0x01,
+      0x85, 0x01, 0x10
+   };
+   switch (channel.modulation)
+   {
+      case DVB_MOD_VSB_8:
+         m_modulation = DVB_MOD_VSB_8;
+         if ((m_modulation != DVB_MOD_VSB_8) && (m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ))
+         {
+            error = set_ifreq();
+         }
+         if (!error)
+         {
+            error = m_device.write(vsb_config, sizeof(vsb_config));
+         }
+         break;
+      case DVB_MOD_QAM_64:
+      case DVB_MOD_QAM_256:
+      case DVB_MOD_QAM_AUTO:
+         m_modulation = channel.modulation;
+         if ((m_modulation == DVB_MOD_VSB_8) && (m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ))
+         {
+            error = set_ifreq();
+         }
+         if (!error)
+         {
+            error = m_device.write_array(qam_config, 3, sizeof(qam_config));
+         }
+         if (!error)
+         {
+            error = qam_optimize();
+         }
+         break;
+      default:
+         return EINVAL;
+   }
+   interface.input_width_bits = m_input;
+   interface.clock = DVB_IFC_PUNC_CLCK;
+   interface.polarity = DVB_IFC_NEG_POL;
+   interface.bit_endianness = DVB_IFC_BIT_BE;
+   return error;
+}
+
+bool cx24227::is_locked(void)
+{
+   uint8_t lock_stat[] = {0x00, 0x00};
+   static uint8_t stat_reg = 0xF1;
+   m_device.transact(&stat_reg, 1, lock_stat, sizeof(lock_stat));
+   if (lock_stat[0] & 0x80)
+   {
+      return true;
+   }
+   return false;
+}
+
+int cx24227::start(uint32_t timeout_ms)
+{
+   reset();
+   uint32_t elapsed = 0;
+   bool locked = false;
+   while (!(locked = is_locked()) && (elapsed < timeout_ms))
+   {
+      usleep(50000);
+      elapsed += 50;     
+   }
+   while (elapsed < timeout_ms);
+   if (!locked)
+   {
+      LIBTUNERERR << "CX24227: demodulator not locked" << endl;
+      return ETIMEDOUT;
+   }
+   return 0;
+}
+
+int cx24227::get_signal(dvb_signal &signal)
+{
+   signal.locked = is_locked();
+   static uint8_t reg_ucblocks = 0xB5;
+   static uint8_t reg_vsb_stat = 0xF1;
+   static uint8_t reg_qam_stat = 0xF0;
+   uint8_t ucblocks[2];
+   m_device.transact(&reg_ucblocks, 1, ucblocks, 2);
+   signal.uncorrected_blocks = ((uint32_t)(ucblocks[0]) << 8) | ucblocks[1];
+   uint8_t snr[2];
+   switch (m_modulation)
+   {
+      case DVB_MOD_VSB_8:
+         m_device.transact(&reg_vsb_stat, 1, snr, 2);
+         signal.strength = ((double)((snr[0] & 0x3) << 8) + snr[1]) / 924;
+         break;
+      default:
+         m_device.transact(&reg_qam_stat, 1, snr, 2);
+         signal.strength = (double)(267 - snr[1]) / 255;
+         break;
+   }
+   return 0;
 }

@@ -12,7 +12,7 @@ CXXFLAGS+= -g -D_DIAGNOSTIC
 .endif
 
 BASE = pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o
-DRIVERS = dtt7612.o dtt7579.o lgh064f.o or51132.o lg3303.o dtt75105.o fmd1216me.o cx22702.o tda9887.o
+DRIVERS = dtt7612.o dtt7579.o lgh064f.o or51132.o lg3303.o dtt75105.o fmd1216me.o cx22702.o tda9887.o mt2131.o cx24227.o
 
 all: $(BASE) $(DRIVERS)
 	$(CXX) -o libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) -Wall -O2 -fPIC -shared -soname libtuner.so.$(LIBTUNER_MAJOR) *.o
@@ -29,6 +29,8 @@ lgh064f.o: pll_driver.o lgh064f.h lgh064f.cpp
 or51132.o: dvb_driver.h tuner_device.o tuner_config.o tuner_firmware.o or51132.h or51132.cpp
 lg3303.o: dvb_driver.h tuner_device.o tuner_config.o lg3303.h lg3303.cpp
 cx22702.o: dvb_driver.h tuner_device.o tuner_config.o cx22702.h cx22702.cpp
+mt2131.o: avb_driver.h dvb_driver.h tuner_device.o mt2131.h mt2131.cpp
+cx24227.o: dvb_driver.h tuner_device.o cx24227.h cx24227.cpp
 
 pll_driver.o: tuner_config.o tuner_device.h tuner_driver.h dvb_driver.h avb_driver.h pll_driver.h pll_driver.cpp
 tuner_devnode_device.o: tuner_device.o tuner_devnode_device.h tuner_devnode_device.cpp

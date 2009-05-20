@@ -25,6 +25,7 @@
  *
  */
 
+#include <sys/errno.h>
 #include "mt2131.h"
 
 #define MT2131_IFREQ1   1220  //kHz
@@ -99,7 +100,7 @@ int mt2131::set_frequency(uint32_t freq_hz)
    uint8_t band_center[2];
    band_center[0] = 0xB;
    band_center[1] = (freq_hz - 27500001) / 55000000;
-   error = m_device.write(&band_center, sizeof(band_center));
+   error = m_device.write(band_center, sizeof(band_center));
    return error;
 }
 

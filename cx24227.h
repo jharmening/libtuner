@@ -47,13 +47,22 @@ class cx24227
          CX24227_QAM_IFREQ_4MHZ = 4000000,
          CX24227_QAM_IFREQ_44MHZ = 44000000
       };
+      
+      enum cx24227_clock_t
+      {
+         CX24227_CLK_CONT_INV = 0,
+         CX24227_CLK_CONT_NINV,
+         CX24227_CLK_NCONT_INV,
+         CX24227_CLK_NCONT_NINV
+      };
 
       cx24227(
          tuner_config &config, 
          tuner_device &device,
-         dvb_interface &interface,
+         dvb_input_t input,
          cx24227_qam_if_t qam_ifreq_hz,
          cx24227_gpio_t gpio,
+         cx24227_clock_t clock,
          int &error);
       
       virtual ~cx24227(void);
@@ -64,20 +73,24 @@ class cx24227
             
       virtual int start(uint32_t timeout_ms);
 
-      virtual void stop(void);
+      virtual void stop(void) {}
 
       virtual void reset(void);
       
    private:
    
-      dvb_interface    m_interface;
+      dvb_input_t      m_input;
       dvb_inversion_t  m_inversion;
       dvb_modulation_t m_modulation;
       cx24227_qam_if_t m_qam_ifreq;
       
-      int set_inversion(void)
+      int set_inversion(void);
       
       int set_ifreq(void);
+      
+      int qam_optimize(void);
+      
+      bool is_locked(void);
 
 };
 
