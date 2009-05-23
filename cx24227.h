@@ -29,32 +29,32 @@
 #define __CX24227_H__
 
 #include "dvb_driver.h"
- 
+
+enum cx24227_gpio_t
+{
+   CX24227_GPIO_DISABLE = 0,
+   CX24227_GPIO_ENABLE
+};
+
+enum cx24227_qam_if_t
+{
+   CX24227_QAM_IFREQ_4MHZ = 4000000,
+   CX24227_QAM_IFREQ_44MHZ = 44000000
+};
+
+enum cx24227_clock_t
+{
+   CX24227_CLK_CONT_INV = 0,
+   CX24227_CLK_CONT_NINV,
+   CX24227_CLK_NCONT_INV,
+   CX24227_CLK_NCONT_NINV
+};
+
 class cx24227
    : public dvb_driver
 {
    
    public:
-
-      enum cx24227_gpio_t
-      {
-         CX24227_GPIO_DISABLE = 0,
-         CX24227_GPIO_ENABLE
-      };
-      
-      enum cx24227_qam_if_t
-      {
-         CX24227_QAM_IFREQ_4MHZ = 4000000,
-         CX24227_QAM_IFREQ_44MHZ = 44000000
-      };
-      
-      enum cx24227_clock_t
-      {
-         CX24227_CLK_CONT_INV = 0,
-         CX24227_CLK_CONT_NINV,
-         CX24227_CLK_NCONT_INV,
-         CX24227_CLK_NCONT_NINV
-      };
 
       cx24227(
          tuner_config &config, 
@@ -65,7 +65,7 @@ class cx24227
          cx24227_clock_t clock,
          int &error);
       
-      virtual ~cx24227(void);
+      virtual ~cx24227(void) {}
    
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
 
