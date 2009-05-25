@@ -152,12 +152,25 @@ cx24227::cx24227(
          error = m_device.write(timing, 3);
       }
    }
-   reset();
+   error = (error ? error : soft_reset());
    if (!error)
    {
       static const uint8_t i2c_gate[] = {0xF3, 0x00, 0x01};
       error = m_device.write(i2c_gate, sizeof(i2c_gate));
    }
+}
+
+void cx24227::reset(void)
+{
+}
+
+void cx24227::stop(void)
+{
+   static const uint8_t sleep_msg[] =
+   {
+      0xF2, 0x00, 0x01
+   };
+   m_device.write(sleep_msg, sizeof(sleep_msg));
 }
 
 int cx24227::set_inversion(void)
@@ -203,17 +216,20 @@ int cx24227::set_ifreq(void)
    }
 }
 
-void cx24227::reset(void)
+int cx24227::soft_reset(void)
 {
    uint8_t reset_msg[3];
    reset_msg[0] = 0xF5;
    reset_msg[1] = 0;
    reset_msg[2] = 0;
-   if (m_device.write(reset_msg, sizeof(reset_msg)) == 0)
+   int error = 0;
+   error = m_device.write(reset_msg, sizeof(reset_msg));
+   if (!error)
    {
       reset_msg[2] = 1;
-      m_device.write(reset_msg, sizeof(reset_msg));	
+      error = m_device.write(reset_msg, sizeof(reset_msg));	
    }
+   return error;
 }
 
 int cx24227::qam_optimize(void)
@@ -281,8 +297,7 @@ int cx24227::qam_optimize(void)
 
 int cx24227::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
-   reset();
-   int error = 0;
+   int error = soft_reset();
    static uint8_t vsb_config[] = {0xF4, 0x00, 0x00};
    static uint8_t qam_config[] = 
    {
@@ -293,7 +308,7 @@ int cx24227::set_channel(const dvb_channel &channel, dvb_interface &interface)
    {
       case DVB_MOD_VSB_8:
          m_modulation = DVB_MOD_VSB_8;
-         if ((m_modulation != DVB_MOD_VSB_8) && (m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ))
+         if (!error && (m_modulation != DVB_MOD_VSB_8) && (m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ))
          {
             error = set_ifreq();
          }
@@ -326,7 +341,7 @@ int cx24227::set_channel(const dvb_channel &channel, dvb_interface &interface)
    interface.clock = DVB_IFC_PUNC_CLCK;
    interface.polarity = DVB_IFC_NEG_POL;
    interface.bit_endianness = DVB_IFC_BIT_BE;
-   return error;
+   return (error ? error : soft_reset());
 }
 
 bool cx24227::is_locked(void)
@@ -343,7 +358,11 @@ bool cx24227::is_locked(void)
 
 int cx24227::start(uint32_t timeout_ms)
 {
-   reset();
+   int error = soft_reset();
+   if (error)
+   {
+      return error;
+   }
    uint32_t elapsed = 0;
    bool locked = false;
    while (!(locked = is_locked()) && (elapsed < timeout_ms))

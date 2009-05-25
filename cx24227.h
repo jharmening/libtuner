@@ -73,7 +73,7 @@ class cx24227
             
       virtual int start(uint32_t timeout_ms);
 
-      virtual void stop(void) {}
+      virtual void stop(void);
 
       virtual void reset(void);
       
@@ -89,6 +89,8 @@ class cx24227
       int set_ifreq(void);
       
       int qam_optimize(void);
+      
+      int soft_reset(void);
       
       bool is_locked(void);
 
