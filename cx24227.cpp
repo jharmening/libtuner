@@ -148,7 +148,7 @@ cx24227::cx24227(
       if (!error)
       {
          timing[1] &= 0xCF;
-			timing[1] |= (clock << 4);
+         timing[1] |= (clock << 4);
          error = m_device.write(timing, 3);
       }
    }
@@ -185,7 +185,7 @@ int cx24227::set_inversion(void)
    else
    {
       inversion[1] = 0x01;
-      inversion[1] = 0x10;
+      inversion[2] = 0x10;
    }
    return m_device.write(inversion, sizeof(inversion));
 }
@@ -304,6 +304,13 @@ int cx24227::set_channel(const dvb_channel &channel, dvb_interface &interface)
       0xF4, 0x00, 0x01,
       0x85, 0x01, 0x10
    };
+   dvb_inversion_t inversion = ((channel.inversion == DVB_INVERSION_AUTO) ? 
+      DVB_INVERSION_OFF : channel.inversion);
+   if (!error && (inversion != m_inversion))
+   {
+      m_inversion = inversion;
+      error = set_inversion();
+   }
    switch (channel.modulation)
    {
       case DVB_MOD_VSB_8:
@@ -370,7 +377,6 @@ int cx24227::start(uint32_t timeout_ms)
       usleep(50000);
       elapsed += 50;     
    }
-   while (elapsed < timeout_ms);
    if (!locked)
    {
       LIBTUNERERR << "CX24227: demodulator not locked" << endl;
@@ -399,6 +405,11 @@ int cx24227::get_signal(dvb_signal &signal)
          m_device.transact(&reg_qam_stat, 1, snr, 2);
          signal.strength = (double)(267 - snr[1]) / 255;
          break;
+   }
+   signal.strength *= 100;
+   if (signal.strength > 100)
+   {
+      signal.strength = 100;
    }
    return 0;
 }

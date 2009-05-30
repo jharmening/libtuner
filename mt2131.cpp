@@ -58,7 +58,6 @@ mt2131::mt2131(tuner_config &config, tuner_device &device, int &error)
    {
       0x10, 0x7f, 0xc8, 0x0a, 0x5f, 0x00, 0x04
    };
-
    if (!error)
    {
       error = m_device.write(config1, sizeof(config1));
@@ -119,7 +118,8 @@ int mt2131::start(uint32_t timeout_ms)
       }
    }
    while (time_slept < timeout_ms);
-   return error;
+   LIBTUNERERR << "[MT2131] tuner not locked" << endl;
+   return ETIMEDOUT;
 }
 
 int mt2131::set_channel(const avb_channel &channel)
