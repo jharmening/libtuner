@@ -411,5 +411,7 @@ int cx24227::get_signal(dvb_signal &signal)
    {
       signal.strength = 100;
    }
+   signal.snr = 0.0;
+   signal.ber = 0;
    return 0;
 }
