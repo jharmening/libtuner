@@ -58,7 +58,7 @@ class pll_driver
       
       virtual ~pll_driver(void)
       {
-         stop();
+         reset();
       }
 
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
@@ -69,7 +69,7 @@ class pll_driver
       
       virtual int start(uint32_t timeout_ms);
 
-      virtual void stop(void);
+      virtual void stop(void) {}
 
       virtual void reset(void);
       

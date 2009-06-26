@@ -134,7 +134,7 @@ int pll_driver::start(uint32_t timeout_ms)
    return error;
 }
 
-void pll_driver::stop(void)
+void pll_driver::reset(void)
 {
    if (m_state != PLL_UNCONFIGURED)
    {
@@ -142,12 +142,6 @@ void pll_driver::stop(void)
       stop_buffer[0] = m_buffer[2] | 0x01;
       stop_buffer[1] = m_buffer[3];
       m_device.write(stop_buffer, 2);
-      m_state = PLL_CONFIGURED;
+      m_state = PLL_UNCONFIGURED;
    }
-}
-
-void pll_driver::reset(void)
-{
-   stop();
-   m_state = PLL_UNCONFIGURED;
 }
