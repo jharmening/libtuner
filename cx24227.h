@@ -65,7 +65,7 @@ class cx24227
          cx24227_clock_t clock,
          int &error);
       
-      virtual ~cx24227(void) {}
+      virtual ~cx24227(void);
    
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
 
@@ -75,7 +75,7 @@ class cx24227
 
       virtual void stop(void);
 
-      virtual void reset(void);
+      virtual void reset(void) {}
       
    private:
    
@@ -91,6 +91,8 @@ class cx24227
       int qam_optimize(void);
       
       int soft_reset(void);
+      
+      int i2c_gate(uint8_t value);
       
       bool is_locked(void);
 

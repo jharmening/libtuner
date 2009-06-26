@@ -155,22 +155,28 @@ cx24227::cx24227(
    error = (error ? error : soft_reset());
    if (!error)
    {
-      static const uint8_t i2c_gate[] = {0xF3, 0x00, 0x01};
-      error = m_device.write(i2c_gate, sizeof(i2c_gate));
+      error = i2c_gate(0x01);
    }
 }
 
-void cx24227::reset(void)
-{
-}
-
-void cx24227::stop(void)
+cx24227::~cx24227(void)
 {
    static const uint8_t sleep_msg[] =
    {
       0xF2, 0x00, 0x01
    };
    m_device.write(sleep_msg, sizeof(sleep_msg));
+}
+
+int cx24227::i2c_gate(uint8_t value)
+{
+   uint8_t i2c_gate[] = {0xF3, 0x00, value};
+   return m_device.write(i2c_gate, sizeof(i2c_gate));
+}
+
+void cx24227::stop(void)
+{
+   i2c_gate(0x01);
 }
 
 int cx24227::set_inversion(void)
@@ -382,7 +388,7 @@ int cx24227::start(uint32_t timeout_ms)
       LIBTUNERERR << "CX24227: demodulator not locked" << endl;
       return ETIMEDOUT;
    }
-   return 0;
+   return i2c_gate(0x00);
 }
 
 int cx24227::get_signal(dvb_signal &signal)
