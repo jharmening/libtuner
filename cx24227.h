@@ -75,7 +75,7 @@ class cx24227
 
       virtual void stop(void);
 
-      virtual void reset(void) {}
+      virtual void reset(void);
       
    private:
    

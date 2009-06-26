@@ -161,11 +161,17 @@ cx24227::cx24227(
 
 cx24227::~cx24227(void)
 {
+   i2c_gate(0x01);
    static const uint8_t sleep_msg[] =
    {
       0xF2, 0x00, 0x01
    };
    m_device.write(sleep_msg, sizeof(sleep_msg));
+}
+
+void cx24227::reset(void)
+{
+   i2c_gate(0x01);
 }
 
 int cx24227::i2c_gate(uint8_t value)

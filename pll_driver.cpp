@@ -134,7 +134,7 @@ int pll_driver::start(uint32_t timeout_ms)
    return error;
 }
 
-void pll_driver::reset(void)
+void pll_driver::do_reset(void)
 {
    if (m_state != PLL_UNCONFIGURED)
    {

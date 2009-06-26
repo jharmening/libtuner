@@ -58,7 +58,7 @@ class pll_driver
       
       virtual ~pll_driver(void)
       {
-         reset();
+         do_reset();
       }
 
       virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
@@ -71,7 +71,10 @@ class pll_driver
 
       virtual void stop(void) {}
 
-      virtual void reset(void);
+      virtual void reset(void)
+      {
+         do_reset();
+      }
       
    protected:
 
@@ -96,6 +99,8 @@ class pll_driver
       const frequency_band *m_bands;
       size_t m_num_bands;
       uint32_t m_ifreq_hz;
+      
+      void do_reset(void);
 
 };
 
