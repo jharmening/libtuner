@@ -42,7 +42,10 @@ enum dvb_modulation_t
    DVB_MOD_QAM_256,
    DVB_MOD_QAM_AUTO,
    DVB_MOD_QPSK,
-   DVB_MOD_OFDM
+   DVB_MOD_OFDM,
+   DVB_MOD_QPSK_NBC,
+   DVB_MOD_8PSK,
+   DVB_MOD_16PSK
 };
 
 enum dvb_inversion_t
@@ -55,6 +58,7 @@ enum dvb_inversion_t
 enum dvb_fec_t
 {
    DVB_FEC_NONE,
+   DVB_FEC_AUTO,
    DVB_FEC_1_2,
    DVB_FEC_2_3,
    DVB_FEC_3_4,
@@ -63,7 +67,8 @@ enum dvb_fec_t
    DVB_FEC_6_7,
    DVB_FEC_7_8,
    DVB_FEC_8_9,
-   DVB_FEC_AUTO
+   DVB_FEC_9_10,
+   DVB_FEC_3_5
 };
 
 enum dvb_clock_t
@@ -106,7 +111,37 @@ typedef struct
    dvb_fec_t code_rate;
 } dvb_qam_settings;
 
-typedef dvb_qam_settings dvb_qpsk_settings;
+enum dvb_polarization_t
+{
+   DVB_POLARIZATION_VERT,
+   DVB_POLARIZATION_HORIZ,
+   DVB_POLARIZATION_RIGHT,
+   DVB_POLARIZATION_LEFT
+};
+
+enum dvb_pilot_t
+{
+   DVB_PILOT_AUTO,
+   DVB_PILOT_OFF,
+   DVB_PILOT_ON
+};
+
+enum dvb_rolloff_t
+{
+   DVB_ROLLOFF_AUTO,
+   DVB_ROLLOFF_0_20,
+   DVB_ROLLOFF_0_25,
+   DVB_ROLLOFF_0_35
+};
+
+typedef struct
+{
+   uint32_t symbol_rate;
+   dvb_fec_t code_rate;
+   dvb_polarization_t polarization;
+   dvb_pilot_t pilot;
+   dvb_rolloff_t rolloff_factor;
+} dvb_psk_settings;
 
 enum dvb_subcarrier_mode_t
 {
@@ -153,7 +188,7 @@ typedef struct
    union
    {
       dvb_qam_settings qam;
-      dvb_qpsk_settings qpsk;
+      dvb_psk_settings psk;
       dvb_ofdm_settings ofdm;
    } modulation_settings;
 } dvb_channel;
