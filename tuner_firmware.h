@@ -28,15 +28,15 @@
 #ifndef __TUNER_FIRMWARE_H__
 #define __TUNER_FIRMWARE_H__
 
-#include <stdio.h>
 #include <sys/types.h>
+#include "tuner_config.h"
 
 class tuner_firmware
 {
 
    public:
 
-      tuner_firmware(const char *filename, int &error);
+      tuner_firmware(tuner_config &conf, const char *filename, int &error);
 
       virtual ~tuner_firmware(void);
 
@@ -63,7 +63,7 @@ class tuner_firmware
       size_t m_length;
       FILE *m_stream;
       bool m_uptodate;
-      char *m_statfile;
+      std::string m_statfile;
       time_t m_modtime;
 };
 

@@ -26,11 +26,11 @@
  */
 
 #include <sys/errno.h>
+#include <sys/stat.h>
 #include <fstream>
+#include "tuner_config.h"
 
 using namespace std;
-
-#include "tuner_config.h"
 
 #define WHITESPACE " \t"
 #define DELIMS WHITESPACE"="
@@ -177,5 +177,62 @@ void tuner_config::remove_config(tuner_config &config)
       {
          m_next->remove_config(config);  
       }
+   }
+}
+
+string tuner_config::get_store_path(void)
+{
+   string path;
+   const char *dir = get_string("LIBTUNER_DATA_STORE");
+   if (dir == NULL)
+   {
+      const char *homedir = getenv("HOME");
+      if (homedir != NULL)
+      {
+         path = homedir;
+      }
+      path += "/.libtuner";
+   }
+   else
+   {
+      path = dir;
+   }
+   return path;  
+}
+
+string tuner_config::get_file(const char *filename)
+{
+   string path;
+   try
+   {
+      path = get_store_path();
+      int error = mkdir(path.c_str(), 0770);
+      if (error && (errno != EEXIST))
+      {
+         LIBTUNERERR << "Unable to create data store at " << path.c_str() << ": " << strerror(errno) << endl;
+      }
+      path += "/";
+      path += filename;
+   }
+   catch (...)
+   {
+      LIBTUNERERR << "Exception when generating data store path for " << filename << endl;
+      return path;
+   }
+   return path;
+}
+
+void tuner_config::put_file(const char *filename)
+{
+   try
+   {
+      string path = get_store_path();
+      string full_path = path + "/" + filename;
+      remove(full_path.c_str());
+      rmdir(path.c_str());
+   }
+   catch (...)
+   {
+      LIBTUNERERR << "Exception when generating data store path for " << filename << endl;
    }
 }

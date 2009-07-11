@@ -36,6 +36,8 @@
 #include "tuner_firmware.h"
 #include "or51132.h"
 
+using namespace std;
+
 #define OR51132_VSB_CONFIG_KEY "OR51132_VSB_FW"
 #define OR51132_QAM_CONFIG_KEY "OR51132_QAM_FW"
 
@@ -64,7 +66,7 @@ int or51132::load_firmware(const char *filename, bool force)
       return EINVAL;
    }
    int error = 0;
-   tuner_firmware fw(filename, error);
+   tuner_firmware fw(m_config, filename, error);
    if (error || (!force && fw.up_to_date ()))
    {
       DIAGNOSTIC(LIBTUNERLOG << "OR51132: NOT updating firmware" << endl)

@@ -34,8 +34,8 @@
 #define DIAGNOSTIC(stmt)
 #endif
 
-#define LIBTUNERERR (cerr << "[libtuner] ")
-#define LIBTUNERLOG (clog << "[libtuner] ")
+#define LIBTUNERERR (std::cerr << "[libtuner] ")
+#define LIBTUNERLOG (std::clog << "[libtuner] ")
 
 #include <iostream>
 #include <iomanip>
@@ -43,7 +43,6 @@
 #include <map>
 #include <list>
 #include <sstream>
-using namespace std;
 
 class tuner_config
 {
@@ -67,8 +66,8 @@ class tuner_config
          const char *str = get_string(key);
          if (str != NULL)
          {
-            string value(str);
-            stringstream stream(value);
+            std::string value(str);
+            std::stringstream stream(value);
             numtype val;
             stream >> val;
             return val;
@@ -85,18 +84,23 @@ class tuner_config
          return get_number<numtype>(key, (numtype)0);
       }
       
+      std::string get_file(const char *filename);
+      
+      void put_file(const char *filename);
+      
       int add_config(tuner_config &config);
       
       void remove_config(tuner_config &config);
-      
 
    private:
       
-      int load(istream &stream, char line_delim = '\n');
+      int load(std::istream &stream, char line_delim = '\n');
       
       const char *get_config_string(const char *key);
         
-      typedef map<string, string> strmap;
+      typedef std::map<std::string, std::string> strmap;
+      
+      std::string get_store_path(void);
       
       strmap m_map;
       

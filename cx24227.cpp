@@ -28,6 +28,8 @@
 #include <sys/errno.h>
 #include "cx24227.h"
 
+using namespace std;
+
 #define CX24227_VSB_IFREQ 5380000
 
 cx24227::cx24227(
@@ -153,10 +155,7 @@ cx24227::cx24227(
       }
    }
    error = (error ? error : soft_reset());
-   if (!error)
-   {
-      error = i2c_gate(0x01);
-   }
+   error = (error ? error : i2c_gate(0x01));
 }
 
 cx24227::~cx24227(void)

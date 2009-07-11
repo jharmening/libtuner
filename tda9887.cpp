@@ -28,6 +28,8 @@
 #include <sys/errno.h>
 #include "tda9887.h"
 
+using namespace std;
+
 #define TDA9887_REG_SWITCHING_MODE 0
 #define TDA9887_PORT2_DISABLE      (1 << 7)
 #define TDA9887_PORT1_DISABLE      (1 << 6)

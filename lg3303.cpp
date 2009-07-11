@@ -30,6 +30,8 @@
 #include <math.h>
 #include "lg3303.h"
 
+using namespace std;
+
 #define REG_TOP_CONTROL         0x00
 #define REG_IRQ_MASK            0x01
 #define REG_IRQ_STATUS          0x02

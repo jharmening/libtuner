@@ -43,7 +43,7 @@ tuner_devnode_device::tuner_devnode_device(tuner_config &config, const char *dev
    }
    if ((m_devnode_fd = open(devnode, O_RDWR)) < 0)
    {
-      LIBTUNERERR << "Unable to open device " << devnode << ": " << strerror(errno) << endl;
+      LIBTUNERERR << "Unable to open device " << devnode << ": " << strerror(errno) << std::endl;
       error = ENOENT;
    }
 }
@@ -61,7 +61,7 @@ int tuner_devnode_device::write(const uint8_t *buffer, size_t size, size_t &writ
    ssize_t retval = ::write(m_devnode_fd, buffer, size);
    if (retval == (ssize_t)-1)
    {
-      LIBTUNERERR << "Unable to write to device: " << strerror(errno) << endl;
+      LIBTUNERERR << "Unable to write to device: " << strerror(errno) << std::endl;
       return errno;
    }
    written = retval;
@@ -73,7 +73,7 @@ int tuner_devnode_device::read(uint8_t *buffer, size_t size, size_t &read)
    ssize_t retval = ::read(m_devnode_fd, buffer, size);
    if (retval == ssize_t(-1))
    {
-      LIBTUNERERR << "Unable to read from device: " << strerror(errno) << endl;
+      LIBTUNERERR << "Unable to read from device: " << strerror(errno) << std::endl;
       return errno;
    }
    read = retval;

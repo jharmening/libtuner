@@ -28,6 +28,8 @@
 #include <sys/errno.h>
 #include "cx22702.h"
 
+using namespace std;
+
 cx22702::cx22702(tuner_config &config, tuner_device &device, dvb_input_t input, int &error)
    : tuner_driver(config, device),
      dvb_driver(config, device),

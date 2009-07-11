@@ -28,6 +28,8 @@
 #include <sys/errno.h>
 #include "mt2131.h"
 
+using namespace std;
+
 #define MT2131_IFREQ1   1220  //kHz
 #define MT2131_IFREQ2   44000 //kHz
 #define MT2131_FREF     16000 //kHz

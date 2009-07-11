@@ -35,12 +35,11 @@ using namespace std;
 
 #include "tuner_firmware.h"
 
-tuner_firmware::tuner_firmware(const char *filename, int &error)
+tuner_firmware::tuner_firmware(tuner_config &conf, const char *filename, int &error)
    : m_buffer(NULL),
      m_length(0),
      m_stream(NULL),
      m_uptodate(false),
-     m_statfile(NULL),
      m_modtime(0)
 {
    if (error)
@@ -61,16 +60,27 @@ tuner_firmware::tuner_firmware(const char *filename, int &error)
       error = ENOMEM;
       return;
    }
-   size_t len = strlen(filename);
-   m_statfile = new char[len + 6];
-   if (m_statfile == NULL)
+   const char *filepart = strrchr(filename, '/');
+   if (filepart == NULL)
    {
+      filepart = filename;
+   }
+   else
+   {
+      ++filepart;
+   }
+   try
+   {
+      string statfile = filepart;
+      statfile += ".stat";
+      m_statfile = conf.get_file(statfile.c_str());
+   }
+   catch (...)
+   {
+      LIBTUNERERR << "Exception when generating firmware stat file for " << filename << endl;
       error = ENOMEM;
       return;
    }
-   strncpy(m_statfile, filename, len);
-   strncpy(m_statfile + len, ".stat", 5);
-   m_statfile[len + 5] = '\0';
    struct stat fwstat;
    if ((error = fstat(fileno(m_stream), &fwstat)))
    {
@@ -78,7 +88,7 @@ tuner_firmware::tuner_firmware(const char *filename, int &error)
    }
    m_modtime = fwstat.st_mtime;
    time_t last_update;
-   ifstream statstream(m_statfile);
+   ifstream statstream(m_statfile.c_str());
    if (statstream.is_open())
    {
       statstream >> last_update;
@@ -102,19 +112,14 @@ tuner_firmware::~tuner_firmware(void)
       fclose(m_stream);
       m_stream = NULL;
    }
-   if (m_statfile != NULL)
-   {
-      delete[] m_statfile;
-      m_statfile = NULL;
-   }
 }
 
 void tuner_firmware::update(void)
 {
-   m_uptodate = true;
-   if (m_statfile != NULL)
+   if (!m_uptodate)
    {
-      ofstream statstream(m_statfile);
+      m_uptodate = true;
+      ofstream statstream(m_statfile.c_str());
       if (statstream.is_open())
       {
          statstream << m_modtime; 

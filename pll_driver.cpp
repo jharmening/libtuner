@@ -122,12 +122,12 @@ int pll_driver::start(uint32_t timeout_ms)
       } while (time_slept < timeout_ms);
       if (!locked)
       {
-         LIBTUNERERR << "PLL timed out waiting for lock" << endl;
+         LIBTUNERERR << "PLL timed out waiting for lock" << std::endl;
          error = ETIMEDOUT;
       }
       else
       {
-         DIAGNOSTIC(LIBTUNERLOG << "PLL has lock" << endl)
+         DIAGNOSTIC(LIBTUNERLOG << "PLL has lock" << std::endl)
          m_state = PLL_LOCKED;
       }
    }
