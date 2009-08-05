@@ -118,6 +118,8 @@ int mt2131::start(uint32_t timeout_ms)
       {
          return error;
       }
+      usleep(50000);
+      time_slept += 50;
    }
    while (time_slept < timeout_ms);
    LIBTUNERERR << "[MT2131] tuner not locked" << endl;

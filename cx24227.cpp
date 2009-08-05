@@ -325,31 +325,37 @@ int cx24227::set_channel(const dvb_channel &channel, dvb_interface &interface)
    switch (channel.modulation)
    {
       case DVB_MOD_VSB_8:
-         m_modulation = DVB_MOD_VSB_8;
-         if (!error && (m_modulation != DVB_MOD_VSB_8) && (m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ))
+         if (!error && (m_modulation != DVB_MOD_VSB_8))
          {
-            error = set_ifreq();
-         }
-         if (!error)
-         {
-            error = m_device.write(vsb_config, sizeof(vsb_config));
+            m_modulation = DVB_MOD_VSB_8;
+            if (m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ)
+            {
+               error = set_ifreq();
+            }
+            if (!error)
+            {
+               error = m_device.write(vsb_config, sizeof(vsb_config));
+            }
          }
          break;
       case DVB_MOD_QAM_64:
       case DVB_MOD_QAM_256:
       case DVB_MOD_QAM_AUTO:
-         m_modulation = channel.modulation;
-         if ((m_modulation == DVB_MOD_VSB_8) && (m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ))
+         if (m_modulation == DVB_MOD_VSB_8)
          {
-            error = set_ifreq();
-         }
-         if (!error)
-         {
-            error = m_device.write_array(qam_config, 3, sizeof(qam_config));
-         }
-         if (!error)
-         {
-            error = qam_optimize();
+            m_modulation = channel.modulation;
+            if ((m_qam_ifreq != CX24227_QAM_IFREQ_44MHZ))
+            {
+               error = set_ifreq();
+            }
+            if (!error)
+            {
+               error = m_device.write_array(qam_config, 3, sizeof(qam_config));
+            }
+            if (!error)
+            {
+               error = qam_optimize();
+            }
          }
          break;
       default:
