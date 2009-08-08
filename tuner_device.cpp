@@ -69,5 +69,5 @@ int tuner_device::transact(const uint8_t *write_buffer, size_t write_size, uint8
    {
       return error;
    }
-   return read(read_buffer, read_size);   
+   return read(read_buffer, read_size);
 }
