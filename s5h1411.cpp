@@ -54,6 +54,8 @@ s5h1411::s5h1411(
    // Reg      Val HI   Val LO
       0xF4,    0x00,    0x00,
       0xF3,    0x00,    0x00,
+      0xF7,    0x00,    0x00,
+      0xF7,    0x00,    0x01,
       0x00,    0x00,    0x71,
       0x08,    0x00,    0x47,
       0x1C,    0x04,    0x00,
@@ -117,6 +119,17 @@ s5h1411::s5h1411(
       0xDF,    0x00,    0x00,
       0xE3,    0x03,    0x01,
    };
+   if (error)
+   {
+      return;
+   }
+   uint8_t chipid[3];
+   chipid[0] = 0x5;
+   error = m_device.transact(chipid, 1, &(chipid[1]), 2);
+   if (!error && ((chipid[1] != 0x0) || (chipid[2] != 0x66)))
+   {
+      error = ENXIO;
+   }
    if (!error)
    {
       error = m_device.write_array(init_config, 3, sizeof(init_config));
@@ -180,7 +193,7 @@ s5h1411::s5h1411(
             gpio_config[2] |= 0x2;
             error = m_device.write(gpio_config, 3);
          }
-         else if ((gpio == S5H1411_GPIO_DISABLE) && (gpio_config[1] & 0x02))
+         else if ((gpio == S5H1411_GPIO_DISABLE) && (gpio_config[2] & 0x02))
          {
             gpio_config[2] &= 0xFD;
             error = m_device.write(gpio_config, 3);
@@ -292,7 +305,7 @@ int s5h1411::set_ifreq(s5h1411_if_t ifreq_hz)
          ifreq_buf = ifreq_4mhz;
          break;
       default:
-	 break;
+         break;
    }
    int error = m_device.write_array(ifreq_buf, 3, 6);
    if (!error)
@@ -392,7 +405,7 @@ bool s5h1411::is_locked(void)
    uint8_t lock_stat[] = {0x00, 0x00};
    static uint8_t stat_reg = 0xF2;
    m_device.transact(&stat_reg, 1, lock_stat, sizeof(lock_stat));
-   if (lock_stat[0] & 0x80)
+   if (lock_stat[0] & 0x10)
    {
       return true;
    }
@@ -402,6 +415,7 @@ bool s5h1411::is_locked(void)
 int s5h1411::start(uint32_t timeout_ms)
 {
    int error = soft_reset();
+   error = error ? error : i2c_gate(0x00);
    if (error)
    {
       return error;
