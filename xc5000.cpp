@@ -69,7 +69,7 @@ xc5000::xc5000(
    }
    else if (id != xc5000_fw_not_loaded)
    {
-      error = ENXIO;
+      LIBTUNERLOG << "xc5000: warning: bogus product ID " << id << endl;
    }
 }
 
