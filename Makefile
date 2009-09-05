@@ -6,6 +6,7 @@ LIBTUNER_MAJOR ?= 1
 LIBTUNER_MINOR ?= 0
 LIBTUNER_REV ?= 0
 INSTALLDIR ?= /usr/local
+DATADIR ?= $(PREFIX)/share/libtuner
 
 .if defined(DIAGNOSTIC)
 CXXFLAGS+= -g -D_DIAGNOSTIC
@@ -44,8 +45,10 @@ tuner_config.o: tuner_config.h tuner_config.cpp
 install: all
 	mkdir -p $(INSTALLDIR)/lib/libtuner
 	mkdir -p $(INSTALLDIR)/include/libtuner
+	mkdir -p $(DATADIR)
 	cp -R libtuner.so* $(INSTALLDIR)/lib/libtuner/
 	cp *.h $(INSTALLDIR)/include/libtuner/
+	cp -r firmware/* $(DATADIR)/
 
 clean:
 	rm -f *.o *.so*
