@@ -30,12 +30,10 @@
 
 #include "avb_driver.h"
 
-enum tda9887_port_state
-{
-   TDA9887_PORT_ACTIVE,
-   TDA9887_PORT_INACTIVE,
-   TDA9887_PORT_AUTO
-};
+#define TDA9887_OPTION_RADIO_IF_41_3    (1 << 0)
+#define TDA9887_OPTION_RADIO_GAIN_NORM  (1 << 1)
+#define TDA9887_OPTION_PORT1_ENABLE     (1 << 2)
+#define TDA9887_OPTION_PORT2_ENABLE     (1 << 3)
 
 class tda9887
    : public avb_driver
@@ -45,24 +43,28 @@ class tda9887
       tda9887(
          tuner_config &config,
          tuner_device &device,
-         tda9887_port_state port1,
-         tda9887_port_state port2);
+         uint16_t options);
       
-      virtual ~tda9887(void) {}
+      virtual ~tda9887(void) 
+      {
+         reset();
+      }
       
       virtual int set_channel(const avb_channel &channel);
 
       virtual int start(uint32_t timeout_ms);
 
-      virtual void stop(void) {}
-
-      virtual void reset(void) {}
+      virtual void stop(void) 
+      {
+         reset();
+      }
+      
+      virtual void reset(void);
 
    private:
-            
-      tda9887_port_state m_port1;
-      tda9887_port_state m_port2;
+      
       uint8_t m_buffer[4];
+      uint16_t m_options;
       
 };   
 

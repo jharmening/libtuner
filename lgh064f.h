@@ -40,9 +40,11 @@ class lgh064f
       
       virtual ~lgh064f(void);
       
+      virtual int set_channel(const avb_channel &channel);
+      
    protected:
       
-      static const frequency_band lgh064f_bands[3];
+      static const frequency_band lgh064f_bands[5];
    
 };
 

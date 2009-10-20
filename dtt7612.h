@@ -39,10 +39,12 @@ class dtt7612
       dtt7612(tuner_config &config, tuner_device &device);
       
       virtual ~dtt7612(void);
+      
+      virtual int set_channel(const avb_channel &channel);
 
    protected:
 
-      static const frequency_band dtt7612_bands[3];
+      static const frequency_band dtt7612_bands[5];
 
 };
 

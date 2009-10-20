@@ -70,12 +70,10 @@ using namespace std;
 tda9887::tda9887(
    tuner_config &config,
    tuner_device &device,
-   tda9887_port_state port1,
-   tda9887_port_state port2)
+   uint16_t options)
    : tuner_driver(config, device),
      avb_driver(config, device),
-     m_port1(port1),
-     m_port2(port2)
+     m_options(options)
 {
    m_buffer[0] = TDA9887_REG_SWITCHING_MODE;
 }
@@ -91,36 +89,44 @@ int tda9887::set_channel(const avb_channel &channel)
             case AVB_AUDIO_FMT_FM_MONO:
                m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
                m_buffer[2] = TDA9887_TOP_ADJUST(0);
-               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_RIF_33_3;
                break;
             case AVB_AUDIO_FMT_FM_MONO_NON_USA:
                m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
                m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_TOP_ADJUST(0);
-               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_RIF_33_3;
                break;
             case AVB_AUDIO_FMT_FM_MONO_USA:
                m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
                m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_TOP_ADJUST(0);
-               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_RIF_33_3;
                break;
             case AVB_AUDIO_FMT_FM_STEREO:
                m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
                m_buffer[2] = TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
-               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_RIF_33_3;
                break;
             case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
                m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
                m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_50 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
-               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_RIF_33_3;
                break;
             case AVB_AUDIO_FMT_FM_STEREO_USA:
                m_buffer[1] = TDA9887_FM_RADIO | TDA9887_CARRIER_QSS;
                m_buffer[2] = TDA9887_DEEMPHASIS_ON | TDA9887_DEEMPHASIS_75 | TDA9887_AUDIO_GAIN_6DB | TDA9887_TOP_ADJUST(0);
-               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_VIF_38_90_EXTFM;
+               m_buffer[3] = TDA9887_AGC_LOW_GAIN | TDA9887_AUDIO_IF_5_5 | TDA9887_RIF_33_3;
                break;
             default:
                LIBTUNERERR << "tda9887: Invalid broadcast audio format: " << channel.audio_format << endl;
                return EINVAL;
+         }
+         if (m_options & TDA9887_OPTION_RADIO_GAIN_NORM)
+         {
+            m_buffer[3] &= (~TDA9887_AGC_LOW_GAIN);
+         }
+         if (m_options & TDA9887_OPTION_RADIO_IF_41_3)
+         {
+            m_buffer[3] |= TDA9887_RIF_41_3;
          }
          break;
       }
@@ -182,19 +188,11 @@ int tda9887::set_channel(const avb_channel &channel)
          LIBTUNERERR << "tda9887: Invalid broadcast video format: " << channel.video_format << endl;
          return EINVAL;
    }
-   if (m_port1 == TDA9887_PORT_ACTIVE)
-   {
-      m_buffer[1] &= ~(TDA9887_PORT1_DISABLE);
-   }
-   else if (m_port1 == TDA9887_PORT_INACTIVE)
+   if (!(m_options & TDA9887_OPTION_PORT1_ENABLE))
    {
       m_buffer[1] |= TDA9887_PORT1_DISABLE;
    }
-   if (m_port2 == TDA9887_PORT_ACTIVE)
-   {
-      m_buffer[1] &= ~(TDA9887_PORT2_DISABLE);
-   }
-   else if (m_port2 == TDA9887_PORT_INACTIVE)
+   if (!(m_options & TDA9887_OPTION_PORT2_ENABLE))
    {
       m_buffer[1] |= TDA9887_PORT2_DISABLE;
    }
@@ -204,4 +202,10 @@ int tda9887::set_channel(const avb_channel &channel)
 int tda9887::start(uint32_t timeout_ms)
 {
    return m_device.write(m_buffer, sizeof(m_buffer));
+}
+
+void tda9887::reset(void)
+{
+   m_buffer[1] |= TDA9887_AUDIO_MUTE;
+   m_device.write(m_buffer, sizeof(m_buffer));
 }

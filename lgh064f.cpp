@@ -38,7 +38,18 @@ lgh064f::~lgh064f(void) {}
 
 const frequency_band lgh064f::lgh064f_bands[] =
 {
-   {54000000,  165000000, 62500, 0xCE, 0x01, 0x50},
+   {54000000,  87500000,  62500, 0xCE, 0x01, 0x50},
+   {87500000,  108000000, 50000, 0xC8, 0x01, 0x50},
+   {108000000, 165000000, 62500, 0xCE, 0x01, 0x50},
    {165000000, 450000000, 62500, 0xCE, 0x02, 0x50},
    {450000000, 863000000, 62500, 0xCE, 0x04, 0x50}
 };
+
+int lgh064f::set_channel(const avb_channel &channel)
+{
+   if ((channel.frequency_hz >= 87500000) && (channel.frequency_hz <= 108000000))
+   {
+      return set_frequency(channel.frequency_hz, 41300000);
+   }
+   return pll_driver::set_channel(channel);
+}
