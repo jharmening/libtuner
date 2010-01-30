@@ -47,9 +47,20 @@ const frequency_band dtt7612::dtt7612_bands[] =
 
 int dtt7612::set_channel(const avb_channel &channel)
 {
-   if ((channel.frequency_hz >= 87500000) && (channel.frequency_hz <= 108000000))
+   if (channel.video_format == AVB_VIDEO_FMT_NONE)
    {
-      return set_frequency(channel.frequency_hz, 41300000);
+      switch (channel.audio_format)
+      {
+         case AVB_AUDIO_FMT_FM_MONO:
+         case AVB_AUDIO_FMT_FM_MONO_NON_USA:
+         case AVB_AUDIO_FMT_FM_MONO_USA:
+         case AVB_AUDIO_FMT_FM_STEREO:
+         case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
+         case AVB_AUDIO_FMT_FM_STEREO_USA:
+            return set_frequency(channel.frequency_hz, 41300000);
+         default:
+            break;
+      }
    }
    return pll_driver::set_channel(channel);
 }
