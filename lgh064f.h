@@ -44,7 +44,8 @@ class lgh064f
       
    protected:
       
-      static const frequency_band lgh064f_bands[5];
+      static const frequency_band lgh064f_bands[3];
+      static const frequency_band lgh064f_fm_bands[3];
    
 };
 

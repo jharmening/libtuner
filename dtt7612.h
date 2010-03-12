@@ -44,7 +44,8 @@ class dtt7612
 
    protected:
 
-      static const frequency_band dtt7612_bands[5];
+      static const frequency_band dtt7612_bands[3];
+      static const frequency_band dtt7612_fm_bands[3];
 
 };
 

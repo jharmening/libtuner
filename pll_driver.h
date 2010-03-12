@@ -100,6 +100,12 @@ class pll_driver
       size_t m_num_bands;
       uint32_t m_ifreq_hz;
       
+      int set_frequency(
+         uint32_t frequency_hz,
+         uint32_t ifreq_hz,
+         const frequency_band *bands,
+         size_t num_bands);
+      
       void do_reset(void);
 
 };

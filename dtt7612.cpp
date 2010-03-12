@@ -38,11 +38,16 @@ dtt7612::~dtt7612(void) {}
 
 const frequency_band dtt7612::dtt7612_bands[] =
 {
-   {57000000,  87500000,  62500, 0x8E, 0x39, 0x50},
-   {87500000,  108000000, 50000, 0x88, 0x39, 0x50},
-   {108000000, 14700000,  62500, 0x8E, 0x39, 0x50},
+   {57000000,  147000000, 62500, 0x8E, 0x39, 0x50},
    {147000000, 417000000, 62500, 0x8E, 0x3A, 0x50},
    {417000000, 863000000, 62500, 0x8E, 0x3C, 0x50}
+};
+
+const frequency_band dtt7612::dtt7612_fm_bands[] =
+{
+   {57000000,  147000000, 50000, 0x88, 0x39, 0x50},
+   {147000000, 417000000, 50000, 0x88, 0x3A, 0x50},
+   {417000000, 863000000, 50000, 0x88, 0x3C, 0x50}
 };
 
 int dtt7612::set_channel(const avb_channel &channel)
@@ -57,7 +62,8 @@ int dtt7612::set_channel(const avb_channel &channel)
          case AVB_AUDIO_FMT_FM_STEREO:
          case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
          case AVB_AUDIO_FMT_FM_STEREO_USA:
-            return set_frequency(channel.frequency_hz, 41300000);
+            return set_frequency(channel.frequency_hz, 41300000,
+               dtt7612_fm_bands, sizeof(dtt7612_fm_bands) / sizeof(frequency_band));
          default:
             break;
       }

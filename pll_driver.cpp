@@ -46,21 +46,30 @@ pll_driver::pll_driver(
 
 int pll_driver::set_frequency(uint32_t frequency_hz, uint32_t ifreq_hz)
 {
+   return set_frequency(frequency_hz, ifreq_hz, m_bands, m_num_bands);
+}
+
+int pll_driver::set_frequency(
+   uint32_t frequency_hz,
+   uint32_t ifreq_hz,
+   const frequency_band *bands,
+   size_t num_bands)
+{
    size_t i;
-   for (i = 0; i < m_num_bands; ++i)
+   for (i = 0; i < num_bands; ++i)
    {
-      if ((m_bands[i].min_frequency <= frequency_hz) && (m_bands[i].max_frequency >= frequency_hz))
+      if ((bands[i].min_frequency <= frequency_hz) && (bands[i].max_frequency >= frequency_hz))
       {
-         uint32_t divider = (ifreq_hz + frequency_hz) / m_bands[i].step_frequency;
+         uint32_t divider = (ifreq_hz + frequency_hz) / bands[i].step_frequency;
          m_buffer[0] = (uint8_t)(divider >> 8);
          m_buffer[1] = (uint8_t)(divider & 0xFF);
-         m_buffer[2] = m_bands[i].control_byte;
-         m_buffer[3] = m_bands[i].bandswitch_byte;
-         m_buffer[4] = m_bands[i].aux_byte;
+         m_buffer[2] = bands[i].control_byte;
+         m_buffer[3] = bands[i].bandswitch_byte;
+         m_buffer[4] = bands[i].aux_byte;
          break;
       }
    }
-   if (i == m_num_bands)
+   if (i == num_bands)
    {
       return EINVAL;  
    }
