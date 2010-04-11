@@ -168,11 +168,9 @@ void tda18271::init_regs(int &error)
       switch (m_regs[TDA18271_REG_ID] & 0x7F)
       {
          case 0x3:
-            printf("Found tda18271 ver. 1\n");
             m_version = TDA18271_VER_1;
             break;
          case 0x4:
-            printf("Found tda18271 ver. 2\n");
             m_version = TDA18271_VER_2;
             m_regs[TDA18271_REG_EXT1] = 0xFC;
             m_regs[TDA18271_REG_EXT12] = 0x33;
