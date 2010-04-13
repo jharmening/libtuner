@@ -406,7 +406,7 @@ bool s5h1411::is_locked(void)
    static uint8_t stat_reg = ((m_modulation == DVB_MOD_VSB_8) ? 0xF2 : 0xF0);
    m_device.transact(&stat_reg, 1, lock_stat, sizeof(lock_stat));
    if (((m_modulation == DVB_MOD_VSB_8) && (lock_stat[0] & 0x10)) ||
-        (lock_stat[1] & 0x10))
+       ((m_modulation != DVB_MOD_VSB_8) && (lock_stat[1] & 0x10)))
    {
       return true;
    }
