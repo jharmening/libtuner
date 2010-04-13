@@ -403,12 +403,23 @@ int s5h1411::set_channel(const dvb_channel &channel, dvb_interface &interface)
 bool s5h1411::is_locked(void)
 {
    uint8_t lock_stat[] = {0x00, 0x00};
-   static uint8_t stat_reg = ((m_modulation == DVB_MOD_VSB_8) ? 0xF2 : 0xF0);
-   m_device.transact(&stat_reg, 1, lock_stat, sizeof(lock_stat));
-   if (((m_modulation == DVB_MOD_VSB_8) && (lock_stat[0] & 0x10)) ||
-       ((m_modulation != DVB_MOD_VSB_8) && (lock_stat[1] & 0x10)))
+   if (m_modulation == DVB_MOD_VSB_8)
    {
-      return true;
+      uint8_t stat_reg = 0xF2;
+      m_device.transact(&stat_reg, 1, lock_stat, sizeof(lock_stat));
+      if (lock_stat[0] & 0x10)
+      {
+         return true;
+      }
+   }
+   else
+   {
+      uint8_t stat_reg = 0xF0;
+      m_device.transact(&stat_reg, 1, lock_stat, sizeof(lock_stat));
+      if (lock_stat[1] & 0x10)
+      {
+         return true;
+      }
    }
    return false;
 }
