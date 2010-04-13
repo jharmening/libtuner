@@ -372,7 +372,9 @@ int s5h1411::set_channel(const dvb_channel &channel, dvb_interface &interface)
       case DVB_MOD_QAM_64:
       case DVB_MOD_QAM_256:
       case DVB_MOD_QAM_AUTO:
-         if (m_modulation == DVB_MOD_VSB_8)
+         if ((m_modulation != DVB_MOD_QAM_64) &&
+             (m_modulation != DVB_MOD_QAM_256) &&
+             (m_modulation != DVB_MOD_QAM_AUTO))
          {
             m_modulation = channel.modulation;
             error = set_ifreq(m_qam_ifreq);
