@@ -170,7 +170,7 @@ int tda8295::set_channel(const avb_channel &channel)
    }
    uint8_t std[3];
    std[0] = 0x00; // STD register address
-   std[2] = 0x01; // set easy mode in register 0x01
+   std[2] = 0x00; // set easy mode in register 0x01
    switch (channel.video_format)
    {
       case AVB_VIDEO_FMT_NTSC_M:
@@ -230,19 +230,15 @@ int tda8295::set_channel(const avb_channel &channel)
    {
       usleep(20000);
       std[0] = 0x01;
-      std[1] = 0x00;
+      std[1] = 0x01;
       error = m_device.write(std, 2);
-   }
-   if (!error)
-   {
-      static const uint8_t blanking[] = {0x1D, 0x03};
-      error = m_device.write(blanking, sizeof(blanking));
-      usleep(20000);
    }
    return error;
 }
 
 int tda8295::start(uint32_t timeout_ms)
 {
-   return 0;
+   int error = 0;
+   i2c_gate_close(error);
+   return error;
 }

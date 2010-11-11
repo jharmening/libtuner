@@ -1830,15 +1830,6 @@ void tda18271::set_rf(uint32_t freq_hz, tda18271_interface &ifc, int &error)
       write_regs(TDA18271_REG_EXT4, TDA18271_REG_EXT4, error);
    }
    usleep(20000);
-   if (m_version == TDA18271_VER_2)
-   {
-      m_regs[TDA18271_REG_EASYPROG3] &= 0xFB;
-      if (!ifc.fm_rfn)
-      {
-         m_regs[TDA18271_REG_EASYPROG3] |= 0x04;
-      }
-      write_regs(TDA18271_REG_EASYPROG3, TDA18271_REG_EASYPROG3, error);
-   }
 }
 
 int tda18271::set_channel(const avb_channel &channel)
@@ -2065,5 +2056,8 @@ int tda18271::get_signal(dvb_signal &signal)
 
 int tda18271::start(uint32_t timeout_ms)
 {
-   return 0;
+   int error = 0;
+   m_regs[TDA18271_REG_EASYPROG3] = (m_regs[TDA18271_REG_EASYPROG3] & 0x1F);
+   write_regs(TDA18271_REG_EASYPROG3, TDA18271_REG_EASYPROG3, error);
+   return error;
 }
