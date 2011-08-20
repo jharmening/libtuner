@@ -90,7 +90,7 @@ void tda8295::agc_enable(bool enable, int &error)
    }
    else
    {
-      agc[1] | 0x40;
+      agc[1] |= 0x40;
    }
    error = m_device.write(agc, sizeof(agc));
 }
