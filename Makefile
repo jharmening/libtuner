@@ -1,10 +1,7 @@
-CXX ?= g++
 CXXFLAGS ?= -O2 
-CXXFLAGS += -Wall -fPIC
+CXXFLAGS += -Wall
 
 LIBTUNER_MAJOR ?= 1
-LIBTUNER_MINOR ?= 0
-LIBTUNER_REV ?= 0
 INSTALLDIR ?= /usr/local
 DATADIR ?= $(PREFIX)/share/libtuner
 
@@ -12,37 +9,33 @@ DATADIR ?= $(PREFIX)/share/libtuner
 CXXFLAGS+= -g -D_DIAGNOSTIC
 .endif
 
-BASE = pll_driver.o tuner_devnode_device.o tuner_firmware.o tuner_config.o
-DRIVERS = dtt7612.o dtt7579.o lgh064f.o or51132.o lg3303.o dtt75105.o fmd1216me.o \
-          cx22702.o tda9887.o mt2131.o cx24227.o s5h1411.o xc5000.o tda18271.o tda8295.o
+SRCS = tuner_device.h tuner_device.cpp \
+       tuner_driver.h \
+       avb_driver.h \
+       dvb_driver.h \
+       pll_driver.h pll_driver.cpp \
+       tuner_devnode_device.h tuner_devnode_device.cpp \
+       tuner_firmware.h tuner_firmware.cpp \
+       tuner_config.h tuner_config.cpp \
+       pll_driver.h pll_driver.cpp \
+       tda9887.h tda9887.cpp \
+       fmd1216me.h fmd1216me.cpp \
+       dtt75105.h dtt75105.cpp \
+       dtt7612.h dtt7612.cpp \
+       dtt7579.h dtt7579.cpp \
+       lgh064f.h lgh064f.cpp \
+       or51132.h or51132.cpp \
+       lg3303.h lg3303.cpp \
+       cx22702.h cx22702.cpp \
+       mt2131.h mt2131.cpp \
+       cx24227.h cx24227.cpp \
+       s5h1411.h s5h1411.cpp \
+       xc5000.h xc5000.cpp	\
+		 tda18271.h tda18271.cpp \
+       tda8295.h tda8295.cpp
 
-all: $(BASE) $(DRIVERS)
-	$(CXX) -o libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) -Wall -O2 -fPIC -shared -soname libtuner.so.$(LIBTUNER_MAJOR) *.o
-	ln -sf libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR).$(LIBTUNER_REV) libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR)
-	ln -sf libtuner.so.$(LIBTUNER_MAJOR).$(LIBTUNER_MINOR) libtuner.so.$(LIBTUNER_MAJOR)
-	ln -sf libtuner.so.$(LIBTUNER_MAJOR) libtuner.so
-
-tda9887.o: avb_driver.h tuner_device.o tuner_config.o tda9887.h tda9887.cpp
-fmd1216me.o: pll_driver.o fmd1216me.h fmd1216me.cpp
-dtt75105.o: pll_driver.o dtt75105.h dtt75105.cpp
-dtt7612.o: pll_driver.o dtt7612.h dtt7612.cpp
-dtt7579.o: pll_driver.o dtt7579.h dtt7579.cpp
-lgh064f.o: pll_driver.o lgh064f.h lgh064f.cpp
-or51132.o: dvb_driver.h tuner_device.o tuner_config.o tuner_firmware.o or51132.h or51132.cpp
-lg3303.o: dvb_driver.h tuner_device.o tuner_config.o lg3303.h lg3303.cpp
-cx22702.o: dvb_driver.h tuner_device.o tuner_config.o cx22702.h cx22702.cpp
-mt2131.o: avb_driver.h dvb_driver.h tuner_device.o mt2131.h mt2131.cpp
-cx24227.o: dvb_driver.h tuner_device.o cx24227.h cx24227.cpp
-s5h1411.o: dvb_driver.h tuner_device.o s5h1411.h s5h1411.cpp
-xc5000.o: avb_driver.h dvb_driver.h tuner_device.o xc5000.h xc5000.cpp
-tda18271.o: avb_driver.h dvb_driver.h tuner_device.o tda18271.h tda18271.cpp
-tda8295.o: avb_driver.h tuner_device.o tda8295.h tda8295.cpp
-
-pll_driver.o: tuner_config.o tuner_device.h tuner_driver.h dvb_driver.h avb_driver.h pll_driver.h pll_driver.cpp
-tuner_devnode_device.o: tuner_device.o tuner_devnode_device.h tuner_devnode_device.cpp
-tuner_device.o: tuner_device.h tuner_device.cpp
-tuner_firmware.o: tuner_firmware.h tuner_firmware.cpp
-tuner_config.o: tuner_config.h tuner_config.cpp
+SHLIB = tuner
+SHLIB_MAJOR = $(LIBTUNER_MAJOR)
 
 install: all
 	mkdir -p $(INSTALLDIR)/lib/libtuner
@@ -52,5 +45,4 @@ install: all
 	cp *.h $(INSTALLDIR)/include/libtuner/
 	cp -r firmware/* $(DATADIR)/
 
-clean:
-	rm -f *.o *.so*
+.include <bsd.lib.mk>
