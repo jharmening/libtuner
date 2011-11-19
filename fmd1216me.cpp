@@ -47,6 +47,18 @@ const frequency_band fmd1216me::fmd1216me_bands[] =
    {803870000, 858000000, 166667, 0xfc, 0x44, 0xa0}
 };
 
+const frequency_band fmd1216me::fmd1216me_fm_bands[] =
+{
+   {50870000,  858000000, 50000, 0x80, 0x99, PLL_IGNORE_AUX}
+};
+
+const frequency_band fmd1216me::fmd1216me_analog_bands[] =
+{
+   {50870000,  158870000, 62500, 0x8e, 0x01, PLL_IGNORE_AUX},
+   {158870000, 441870000, 62500, 0x8e, 0x02, PLL_IGNORE_AUX},
+   {441870000, 858000000, 62500, 0x8e, 0x04, PLL_IGNORE_AUX}
+};
+
 int fmd1216me::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
    int error = pll_driver::set_channel(channel, interface);
@@ -59,7 +71,36 @@ int fmd1216me::set_channel(const dvb_channel &channel, dvb_interface &interface)
 
 int fmd1216me::set_channel(const avb_channel &channel)
 {
-   int error = pll_driver::set_channel(channel);
+   uint32_t ifreq_hz = 36125000;
+   switch (channel.video_format)
+   {
+      case AVB_VIDEO_FMT_NONE:
+         switch (channel.audio_format)
+         {
+            case AVB_AUDIO_FMT_FM_MONO:
+            case AVB_AUDIO_FMT_FM_MONO_NON_USA:
+            case AVB_AUDIO_FMT_FM_MONO_USA:
+            case AVB_AUDIO_FMT_FM_STEREO:
+            case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
+            case AVB_AUDIO_FMT_FM_STEREO_USA:
+               return set_frequency(channel.frequency_hz, 10700000, fmd1216me_fm_bands, 
+                  sizeof(fmd1216me_fm_bands) / sizeof(frequency_band));
+            default:
+               break;
+         }
+         break;
+      case AVB_VIDEO_FMT_NTSC_M:
+      case AVB_VIDEO_FMT_NTSC_N:
+      case AVB_VIDEO_FMT_NTSC_443:
+      case AVB_VIDEO_FMT_PAL_M:
+      case AVB_VIDEO_FMT_PAL_NC:     
+         ifreq_hz = 44000000;
+         break;
+      default:
+         break;
+   }
+   int error = set_frequency(channel.frequency_hz, ifreq_hz, fmd1216me_analog_bands,
+      sizeof(fmd1216me_analog_bands) / sizeof(frequency_band));
    if (!error && (channel.bandwidth_hz == 8000000) && (channel.frequency_hz >= 158870000))
    {
       m_buffer[PLL_BANDSWITCH_BYTE] |= 0x08;

@@ -128,6 +128,14 @@ int tda9887::set_channel(const avb_channel &channel)
          {
             m_buffer[3] |= TDA9887_RIF_41_3;
          }
+         if (m_options & TDA9887_OPTION_RADIO_PORT1_DISABLE)
+         {
+            m_buffer[1] |= TDA9887_PORT1_DISABLE;
+         }
+         if (m_options & TDA9887_OPTION_RADIO_PORT2_DISABLE)
+         {
+            m_buffer[1] |= TDA9887_PORT2_DISABLE;
+         }
          break;
       }
       case AVB_VIDEO_FMT_NTSC_J:

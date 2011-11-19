@@ -47,7 +47,8 @@ class fmd1216me
    protected:
 
       static const frequency_band fmd1216me_bands[7];
-
+      static const frequency_band fmd1216me_fm_bands[1];
+      static const frequency_band fmd1216me_analog_bands[3];
 };
 
 #endif

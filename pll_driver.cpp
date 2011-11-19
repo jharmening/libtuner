@@ -101,7 +101,7 @@ int pll_driver::start(uint32_t timeout_ms)
    if (m_buffer[4] != PLL_IGNORE_AUX)
    {
       uint8_t aux_buffer[2];
-      aux_buffer[0] = m_buffer[2] | 0x18;
+      aux_buffer[0] = (m_buffer[2] & 0xC7) | 0x18;
       aux_buffer[1] = m_buffer[4];
       if ((error = m_device.write(aux_buffer, 2)))
       {

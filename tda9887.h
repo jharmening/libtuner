@@ -30,10 +30,12 @@
 
 #include "avb_driver.h"
 
-#define TDA9887_OPTION_RADIO_IF_41_3    (1 << 0)
-#define TDA9887_OPTION_RADIO_GAIN_NORM  (1 << 1)
-#define TDA9887_OPTION_PORT1_ENABLE     (1 << 2)
-#define TDA9887_OPTION_PORT2_ENABLE     (1 << 3)
+#define TDA9887_OPTION_RADIO_IF_41_3       (1 << 0)
+#define TDA9887_OPTION_RADIO_GAIN_NORM     (1 << 1)
+#define TDA9887_OPTION_PORT1_ENABLE        (1 << 2)
+#define TDA9887_OPTION_PORT2_ENABLE        (1 << 3)
+#define TDA9887_OPTION_RADIO_PORT1_DISABLE (1 << 4)
+#define TDA9887_OPTION_RADIO_PORT2_DISABLE (1 << 5)
 
 class tda9887
    : public avb_driver
