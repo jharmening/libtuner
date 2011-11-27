@@ -83,7 +83,7 @@ int fmd1216me::set_channel(const avb_channel &channel)
             case AVB_AUDIO_FMT_FM_STEREO:
             case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
             case AVB_AUDIO_FMT_FM_STEREO_USA:
-               return set_frequency(channel.frequency_hz, 33300000, fmd1216me_fm_bands, 
+               return set_frequency(channel.frequency_hz, 41300000, fmd1216me_fm_bands, 
                   sizeof(fmd1216me_fm_bands) / sizeof(frequency_band));
             default:
                break;
