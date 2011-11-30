@@ -49,7 +49,7 @@ const frequency_band fmd1216me::fmd1216me_bands[] =
 
 const frequency_band fmd1216me::fmd1216me_fm_bands[] =
 {
-   {50870000,  858000000, 50000, 0x80, 0x99, PLL_IGNORE_AUX}
+   {50870000,  858000000, 50000, 0x88, 0x19, PLL_IGNORE_AUX}
 };
 
 const frequency_band fmd1216me::fmd1216me_analog_bands[] =
@@ -83,7 +83,7 @@ int fmd1216me::set_channel(const avb_channel &channel)
             case AVB_AUDIO_FMT_FM_STEREO:
             case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
             case AVB_AUDIO_FMT_FM_STEREO_USA:
-               return set_frequency(channel.frequency_hz, 41300000, fmd1216me_fm_bands, 
+               return set_frequency(channel.frequency_hz, 10700000, fmd1216me_fm_bands, 
                   sizeof(fmd1216me_fm_bands) / sizeof(frequency_band));
             default:
                break;
