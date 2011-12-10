@@ -31,8 +31,9 @@ SRCS = tuner_device.h tuner_device.cpp \
        cx24227.h cx24227.cpp \
        s5h1411.h s5h1411.cpp \
        xc5000.h xc5000.cpp	\
-		 tda18271.h tda18271.cpp \
-       tda8295.h tda8295.cpp
+       tda18271.h tda18271.cpp \
+       tda8295.h tda8295.cpp \
+       tuv1236d.h tuv1236d.cpp
 
 SHLIB = tuner
 SHLIB_MAJOR = $(LIBTUNER_MAJOR)
