@@ -48,6 +48,7 @@ class tuv1236d
 
       static const frequency_band tuv1236d_digital_bands[3];
       static const frequency_band tuv1236d_analog_bands[3];
+      static const frequency_band tuv1236d_fm_bands[1];
 };
 
 #endif

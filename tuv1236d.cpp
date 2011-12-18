@@ -50,6 +50,11 @@ const frequency_band tuv1236d::tuv1236d_analog_bands[] =
    {454000000, 895000000, 62500, 0xce, 0x04, PLL_IGNORE_AUX}
 };
 
+const frequency_band tuv1236d::tuv1236d_fm_bands[] =
+{
+   {54000000,  895000000, 50000, 0xc8, 0x01, PLL_IGNORE_AUX}
+};
+
 int tuv1236d::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
    int error = pll_driver::set_channel(channel, interface);
@@ -70,6 +75,22 @@ int tuv1236d::set_channel(const dvb_channel &channel, dvb_interface &interface)
 
 int tuv1236d::set_channel(const avb_channel &channel)
 {
+   if (channel.video_format == AVB_VIDEO_FMT_NONE)
+   {
+      switch (channel.audio_format)
+      {
+         case AVB_AUDIO_FMT_FM_MONO:
+         case AVB_AUDIO_FMT_FM_MONO_NON_USA:
+         case AVB_AUDIO_FMT_FM_MONO_USA:
+         case AVB_AUDIO_FMT_FM_STEREO:
+         case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
+         case AVB_AUDIO_FMT_FM_STEREO_USA:
+            return set_frequency(channel.frequency_hz, 41300000,
+               tuv1236d_fm_bands, sizeof(tuv1236d_fm_bands) / sizeof(frequency_band));
+         default:
+            break;
+      }
+   }
    return set_frequency(channel.frequency_hz, 44000000, tuv1236d_analog_bands, 
       sizeof(tuv1236d_analog_bands) / sizeof(frequency_band));
 }
