@@ -46,6 +46,10 @@ class nxt2004 : public dvb_driver
 
       virtual int get_signal(dvb_signal &signal);
 
+      virtual void stop(void) {}
+
+      virtual void reset(void) {}
+
    protected:
 
       int init_microcontroller(void);
