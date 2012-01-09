@@ -54,10 +54,21 @@ nxt2004::nxt2004(
       LIBTUNERERR << "nxt2004: unrecognized chip ID " << chipid[1] << endl;
       error = ENXIO;
    }
-   if (!error)
+   error = (error ? error : init());
+   error = (error ? error : enable_tuner(device));
+}
+
+int nxt2004::enable_tuner(tuner_device &device)
+{
+   static const uint8_t buffer[] =
    {
-      error = init();
-   }
+      0x10, 0x12,
+      0x13, 0x04,
+      0x16, 0x00,
+      0x14, 0x04,
+      0x17, 0x00
+   };
+   return device.write_array(buffer, 2, sizeof(buffer));
 }
 
 int nxt2004::init_microcontroller(void)

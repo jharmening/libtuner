@@ -50,6 +50,8 @@ class nxt2004 : public dvb_driver
 
       virtual void reset(void) {}
 
+      static int enable_tuner(tuner_device &device);
+
    protected:
 
       int init_microcontroller(void);
