@@ -69,10 +69,11 @@ int or51132::load_firmware(const char *filename, bool force)
    tuner_firmware fw(m_config, filename, error);
    if (error || (!force && fw.up_to_date ()))
    {
-      DIAGNOSTIC(LIBTUNERLOG << "OR51132: NOT updating firmware" << endl)
+      DIAGNOSTIC(LIBTUNERLOG << "or51132: NOT updating firmware" << endl)
       return error;
    }
-   DIAGNOSTIC(LIBTUNERLOG << "OR51132: Updating firmware" << endl)
+
+   LIBTUNERLOG << "or51132: Loading firmware..." << endl;
    uint32_t size_a = le32toh(*((uint32_t*)(fw.buffer())));
    uint32_t size_b = le32toh(*(((uint32_t*)(fw.buffer())) + 1));
    uint8_t *fw_bytes = (uint8_t*)(fw.buffer());
@@ -129,7 +130,7 @@ int or51132::load_firmware(const char *filename, bool force)
    }
    if (!error)
    {
-      DIAGNOSTIC(LIBTUNERLOG << "OR51132 Firmware rev. " << setfill('0') << hex <<
+      DIAGNOSTIC(LIBTUNERLOG << "or51132 Firmware rev. " << setfill('0') << hex <<
          setw(2) << (int)(buffer[1]) << setw(2) << (int)(buffer[0]) << setw(2) << (int)(buffer[3]) << 
          setw(2) << (int)(buffer[2]) << '-' << setw(2) << (int)(buffer[5]) << setw(2) << (int)(buffer[4]) << 
          setw(2) << (int)(buffer[7]) << setw(2) << (int)(buffer[6]) << dec << endl)
@@ -143,6 +144,7 @@ int or51132::load_firmware(const char *filename, bool force)
    {
       fw.update();  
    }
+   LIBTUNERLOG << "or51132: Finished" << endl;
    return error;
 }
 
@@ -211,7 +213,7 @@ int or51132::get_signal(dvb_signal &signal)
    status[0] = get_mode(status[1]);
    if (status[0] == OR51132_MODE_UNKNOWN)
    {
-      LIBTUNERERR << "OR51132: Unable to retrieve signal status: Modulation not set" << endl;
+      LIBTUNERERR << "or51132: Unable to retrieve signal status: Modulation not set" << endl;
       return ENXIO;
    }
    if (!(status[1] & 0x01))
@@ -225,32 +227,32 @@ int or51132::get_signal(dvb_signal &signal)
    switch (status[0])
    {
       case OR51132_MODE_VSB:
-         DIAGNOSTIC(LIBTUNERLOG << "OR51132: getting VSB signal" << endl)
+         DIAGNOSTIC(LIBTUNERLOG << "or51132: getting VSB signal" << endl)
          if (status[1] & 0x10)
          {
             ntsc_correction = 3;
          }
       case OR51132_MODE_QAM64:
-         DIAGNOSTIC(LIBTUNERLOG << "OR51132: getting QAM64 signal" << endl)
+         DIAGNOSTIC(LIBTUNERLOG << "or51132: getting QAM64 signal" << endl)
          snr_const = 897152044.8282;
          break;
       case OR51132_MODE_QAM256:
-         DIAGNOSTIC(LIBTUNERLOG << "OR51132: getting QAM256 signal" << endl)
+         DIAGNOSTIC(LIBTUNERLOG << "or51132: getting QAM256 signal" << endl)
          snr_const = 907832426.314266;
          break;
       default:
-         LIBTUNERERR << "OR51132: Unrecognized modulation status" << endl;
+         LIBTUNERERR << "or51132: Unrecognized modulation status" << endl;
          return ENXIO;
    }
    if ((error = m_device.write(buffer, sizeof(buffer))))
    {
-      LIBTUNERERR << "OR51132: Unable to request noise value" << endl;
+      LIBTUNERERR << "or51132: Unable to request noise value" << endl;
       return error;
    }
    usleep(30000);
    if ((error = m_device.read(status, sizeof(status))))
    {
-      LIBTUNERERR << "OR51132: Unable to receive noise value" << endl;
+      LIBTUNERERR << "or51132: Unable to receive noise value" << endl;
       return error;
    }
    noise = (status[1] << 8) | status[0];
@@ -276,12 +278,12 @@ int or51132::start(uint32_t timeout_ms)
          buffer[2] = 0x5F;
          break;
       default:
-         LIBTUNERERR << "OR51132: Unable to start device: modulation not configured" << endl;
+         LIBTUNERERR << "or51132: Unable to start device: modulation not configured" << endl;
          return ENXIO;
    }
    if ((error = m_device.write(buffer, sizeof(buffer))))
    {
-      LIBTUNERERR << "OR51132: Unable to start device: failed to set operation mode" << endl;
+      LIBTUNERERR << "or51132: Unable to start device: failed to set operation mode" << endl;
       m_mode = OR51132_MODE_UNKNOWN;
       return error;
    }
@@ -298,7 +300,7 @@ int or51132::start(uint32_t timeout_ms)
    buffer[2] = m_mode;
    if ((error = m_device.write(buffer, sizeof(buffer))))
    {
-      LIBTUNERERR << "OR51132: Unable to start device: failed to set receiver/channel mode" << endl;
+      LIBTUNERERR << "or51132: Unable to start device: failed to set receiver/channel mode" << endl;
       m_mode = OR51132_MODE_UNKNOWN;
       return error;
    }
@@ -322,7 +324,7 @@ int or51132::start(uint32_t timeout_ms)
    } while (time_slept < timeout_ms);
    if (!locked)
    {
-      LIBTUNERERR << "OR51132: demodulator not locked" << endl;
+      LIBTUNERERR << "or51132: demodulator not locked" << endl;
       return ETIMEDOUT;
    }
    return 0;
@@ -335,13 +337,13 @@ uint8_t or51132::get_mode(uint8_t &status)
    int error = 0;
    if ((error = m_device.write(buffer, sizeof(buffer))))
    {
-      LIBTUNERERR << "OR51132: Failed to request demodulator status" << endl;
+      LIBTUNERERR << "or51132: Failed to request demodulator status" << endl;
       return OR51132_MODE_UNKNOWN;
    }
    usleep(30000);
    if ((error = m_device.read(full_status, sizeof(full_status))))
    {
-      LIBTUNERERR << "OR51132: Failed to receive demodulator status" << endl;
+      LIBTUNERERR << "or51132: Failed to receive demodulator status" << endl;
       return OR51132_MODE_UNKNOWN;
    }
    status = full_status[1];

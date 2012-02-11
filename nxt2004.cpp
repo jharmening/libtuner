@@ -55,7 +55,6 @@ nxt2004::nxt2004(
       error = ENXIO;
    }
    error = (error ? error : init());
-   error = (error ? error : enable_tuner(device));
 }
 
 int nxt2004::enable_tuner(tuner_device &device)
@@ -251,6 +250,8 @@ int nxt2004::init(void)
    buffer[2] = 0x00;
    buffer[3] = 0x81;
    error = (error ? error : m_device.write(buffer, 4));
+   
+   LIBTUNERLOG << "nxt2004: Loading firmware..." << endl;
    buffer[0] = 0x2C;
    uint16_t crc = 0;
    size_t offset = 0;
@@ -275,12 +276,14 @@ int nxt2004::init(void)
          {
             break;
          }
-         offset = bufindex + 1;
+         offset = i + 1;
       }
    }
    buffer[1] = crc >> 8;
    buffer[2] = crc & 0xFF;
    error = (error ? error : m_device.write(buffer, 3));
+   LIBTUNERLOG << "nxt2004: Finished" << endl;
+
    error = (error ? error : m_device.transact(buffer, 1, &(buffer[1]), 1));
    buffer[0] = 0x2B;
    buffer[1] = 0x80;
@@ -407,27 +410,7 @@ int nxt2004::init(void)
    buffer[1] = 0x44;
    error = (error ? error : write_microcontroller(buffer, 2));
 
-   buffer[0] = 0x10;
-   error = (error ? error : m_device.transact(buffer, 1, &(buffer[1]), 1));
-   buffer[1] = 0x12;
-   error = (error ? error : m_device.write(buffer, 2));
-   buffer[0] = 0x13;
-   buffer[1] = 0x4;
-   error = (error ? error : m_device.write(buffer, 2));
-   buffer[0] = 0x16;
-   buffer[1] = 0x0;
-   error = (error ? error : m_device.write(buffer, 2));
-   buffer[0] = 0x14;
-   buffer[1] = 0x4;
-   error = (error ? error : m_device.write(buffer, 2));
-   buffer[1] = 0x0;
-   error = (error ? error : m_device.write(buffer, 2));
-   buffer[0] = 0x17;
-   error = (error ? error : m_device.write(buffer, 2));
-   buffer[0] = 0x14;
-   error = (error ? error : m_device.write(buffer, 2));
-   buffer[0] = 0x17;
-   error = (error ? error : m_device.write(buffer, 2));
+   error = (error ? error : enable_tuner(m_device));
 
    return error;
 }
