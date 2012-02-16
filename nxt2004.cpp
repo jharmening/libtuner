@@ -492,7 +492,6 @@ int nxt2004::start(uint32_t timeout_ms)
    }
    buffer[2] = 0x0;
    error = (error ? error : m_device.write(buffer, 3));
-   return error;
    buffer[0] = 0x43;
    buffer[1] = 0x5;
    error = (error ? error : m_device.write(buffer, 2));
