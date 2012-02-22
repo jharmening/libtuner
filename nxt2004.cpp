@@ -606,7 +606,7 @@ int nxt2004::get_signal(dvb_signal &signal)
    int error = m_device.write(buffer, 2);
    buffer[0] = 0xA6;
    error = (error ? error : read_microcontroller(buffer, 3));
-   uint16_t raw_snr = ((uint16_t)(buffer[1]) << 8) | buffer[2];
+   uint16_t raw_snr = 0x7FFF - (((uint16_t)(buffer[1]) << 8) | buffer[2]);
    struct
    {
       uint16_t snr_min;
