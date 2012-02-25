@@ -570,7 +570,7 @@ int nxt2004::start(uint32_t timeout_ms)
    buffer[0] = 0x5C;
    buffer[1] = 0xF0;
    buffer[2] = 0x0;
-   error = (error ? error : m_device.write(buffer, 2));
+   error = (error ? error : m_device.write(buffer, 3));
    if (!error)
    {
       uint32_t elapsed = 0;
