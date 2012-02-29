@@ -57,9 +57,9 @@ nxt2004::nxt2004(
    error = (error ? error : init());
 }
 
-int nxt2004::enable_tuner(tuner_device &device)
+int nxt2004::enable_tuner(tuner_device &device, nxt2004::tuner_source source)
 {
-   static const uint8_t buffer[] =
+   uint8_t buffer[] =
    {
       0x10, 0x12,
       0x13, 0x04,
@@ -67,6 +67,10 @@ int nxt2004::enable_tuner(tuner_device &device)
       0x14, 0x04,
       0x17, 0x00
    };
+   if (source == TUNER_SOURCE_ANALOG)
+   {
+      buffer[7] = 0x0;
+   }
    return device.write_array(buffer, 2, sizeof(buffer));
 }
 
@@ -410,7 +414,7 @@ int nxt2004::init(void)
    buffer[1] = 0x44;
    error = (error ? error : write_microcontroller(buffer, 2));
 
-   error = (error ? error : enable_tuner(m_device));
+   error = (error ? error : enable_tuner(m_device, TUNER_SOURCE_DIGITAL));
 
    return error;
 }
@@ -418,13 +422,6 @@ int nxt2004::init(void)
 int nxt2004::set_channel(const dvb_channel &channel, dvb_interface &interface)
 {
    int error = stop_microcontroller();
-   uint8_t buffer[2];
-   buffer[0] = 0x14;
-   buffer[1] = 0x4;
-   error = (error ? error : m_device.write(buffer, sizeof(buffer)));
-   buffer[0] = 0x17;
-   buffer[1] = 0x0;
-   error = (error ? error : m_device.write(buffer, sizeof(buffer)));
    switch (channel.modulation)
    {
       case DVB_MOD_VSB_8:
@@ -623,9 +620,10 @@ int nxt2004::get_signal(dvb_signal &signal)
    signal.snr = 0.0;
    for (size_t i = 0; i < (sizeof(snr_table) / sizeof(snr_table[0])); ++i)
    {
-      if (raw_snr > snr_table[i].snr_min)
+      if (raw_snr >= snr_table[i].snr_min)
       {
          signal.snr = snr_table[i].base + (snr_table[i].coeff * (double)(raw_snr - snr_table[i].snr_min) / (snr_table[i].snr_max - snr_table[i].snr_min));
+         break;
       }
    }
    buffer[0] = 0xE6;

@@ -44,11 +44,24 @@ class tuv1236d
       
       virtual int set_channel(const avb_channel &channel);
 
+      virtual int start(uint32_t timeout_ms);
+
+      enum tuner_input
+      {
+         TUNER_INPUT_DEFAULT,
+         TUNER_INPUT_1,
+         TUNER_INPUT_2
+      };
+
+      void select_input(tuner_input input);
+
    protected:
 
       static const frequency_band tuv1236d_digital_bands[3];
       static const frequency_band tuv1236d_analog_bands[3];
       static const frequency_band tuv1236d_fm_bands[1];
+
+      tuner_input m_input;
 };
 
 #endif

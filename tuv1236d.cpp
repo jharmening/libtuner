@@ -31,7 +31,8 @@ tuv1236d::tuv1236d(tuner_config &config, tuner_device &device)
    : tuner_driver(config, device),
      pll_driver(config, device, tuv1236d_digital_bands, 
          (sizeof(tuv1236d_digital_bands) / sizeof(frequency_band)),
-         44000000)
+         44000000),
+     m_input(TUNER_INPUT_DEFAULT)
 {}
 
 tuv1236d::~tuv1236d(void) {}
@@ -93,5 +94,23 @@ int tuv1236d::set_channel(const avb_channel &channel)
    }
    return set_frequency(channel.frequency_hz, 44000000, tuv1236d_analog_bands, 
       sizeof(tuv1236d_analog_bands) / sizeof(frequency_band));
+}
+
+void tuv1236d::select_input(tuv1236d::tuner_input input)
+{
+   m_input = input;
+}
+
+int tuv1236d::start(uint32_t timeout_ms)
+{
+   if (m_input == TUNER_INPUT_1)
+   {
+      m_buffer[PLL_BANDSWITCH_BYTE] &= (~0x08);
+   }
+   else if (m_input == TUNER_INPUT_2)
+   {
+      m_buffer[PLL_BANDSWITCH_BYTE] |= 0x08;
+   }
+   return pll_driver::start(timeout_ms);
 }
 

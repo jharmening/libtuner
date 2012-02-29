@@ -50,7 +50,13 @@ class nxt2004 : public dvb_driver
 
       virtual void reset(void) {}
 
-      static int enable_tuner(tuner_device &device);
+      enum tuner_source
+      {
+         TUNER_SOURCE_ANALOG,
+         TUNER_SOURCE_DIGITAL
+      };
+
+      static int enable_tuner(tuner_device &device, tuner_source source);
 
    protected:
 
