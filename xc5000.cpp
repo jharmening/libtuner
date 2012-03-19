@@ -258,6 +258,10 @@ int xc5000::set_channel(const dvb_channel &channel, dvb_interface &interface)
    }
    if (!error)
    {
+      error = write_reg(XC5000_REG_OUTPUT_AMP, 0x008A);
+   }
+   if (!error)
+   {
       error = set_frequency((uint32_t)(channel.frequency_hz + freq_offset));
    }
    return error;
@@ -405,6 +409,7 @@ int xc5000::set_channel(const avb_channel &channel)
             default:
                return EINVAL;
          }
+         break;
       default:
          return EINVAL;
    }
@@ -412,6 +417,10 @@ int xc5000::set_channel(const avb_channel &channel)
    if (!error)
    {
       error = write_reg(XC5000_REG_AUDIO_MODE, audio_mode_reg);
+   }
+   if (!error)
+   {
+      error = write_reg(XC5000_REG_OUTPUT_AMP, 0x0009);
    }
    if (!error)
    {

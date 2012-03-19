@@ -91,6 +91,7 @@ class xc5000
          XC5000_REG_OUTPUT_FREQ     = 0x05,
          XC5000_REG_SEEK_MODE       = 0x07,
          XC5000_REG_POWER_DOWN      = 0x0A,
+         XC5000_REG_OUTPUT_AMP      = 0x0B,
          XC5000_REG_SIGNAL_SOURCE   = 0x0D,
          XC5000_REG_SMOOTHEDCVBS    = 0x0E,
          XC5000_REG_XTAL_FREQ       = 0x0F,
@@ -111,7 +112,7 @@ class xc5000
          XC5000_REG_PRODUCT_ID      = 0x08,
          XC5000_REG_BUSY            = 0x09
       };
-      
+
       enum xc5000_source_t
       {
          XC5000_SOURCE_AIR = 0,
