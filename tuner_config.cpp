@@ -183,7 +183,7 @@ void tuner_config::remove_config(tuner_config &config)
 string tuner_config::get_store_path(void)
 {
    string path;
-   const char *dir = get_string("LIBTUNER_DATA_STORE");
+   const char *dir = get_string(LIBTUNER_STORE_PATH_KEY);
    if (dir == NULL)
    {
       const char *homedir = getenv("HOME");
@@ -196,6 +196,12 @@ string tuner_config::get_store_path(void)
    else
    {
       path = dir;
+   }
+   const char *domain = get_string(LIBTUNER_DOMAIN_KEY);
+   if (domain != NULL)
+   {
+      path += "_";
+      path += domain;
    }
    return path;  
 }

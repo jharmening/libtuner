@@ -28,9 +28,8 @@
 #include <sys/errno.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <string>
-#include <iostream>
-#include <fstream>
 using namespace std;
 
 #include "tuner_firmware.h"
@@ -88,11 +87,13 @@ tuner_firmware::tuner_firmware(tuner_config &conf, const char *filename, int &er
    }
    m_modtime = fwstat.st_mtime;
    time_t last_update;
-   ifstream statstream(m_statfile.c_str());
-   if (statstream.is_open())
+   FILE *statstream = fopen(m_statfile.c_str(), "r");
+   if (statstream != NULL)
    {
-      statstream >> last_update;
-      statstream.close();
+      flock(fileno(statstream), LOCK_EX);
+      fscanf(statstream, "%ld", &last_update);
+      flock(fileno(statstream), LOCK_UN);
+      fclose(statstream);
       if (m_modtime <= last_update)
       {
          m_uptodate = true;
@@ -119,11 +120,15 @@ void tuner_firmware::update(void)
    if (!m_uptodate)
    {
       m_uptodate = true;
-      ofstream statstream(m_statfile.c_str());
-      if (statstream.is_open())
+      FILE *statstream = fopen(m_statfile.c_str(), "w+");
+      if (statstream != NULL)
       {
-         statstream << m_modtime; 
-         statstream.close(); 
+         flock(fileno(statstream), LOCK_EX);
+         fprintf(statstream, "%ld", m_modtime);
+         fflush(statstream);
+         flock(fileno(statstream), LOCK_UN);
+         fclose(statstream); 
       }
    }
 }
+

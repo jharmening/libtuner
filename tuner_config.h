@@ -44,6 +44,9 @@
 #include <list>
 #include <sstream>
 
+#define LIBTUNER_STORE_PATH_KEY "LIBTUNER_DATA_STORE"
+#define LIBTUNER_DOMAIN_KEY "LIBTUNER_DOMAIN"
+
 class tuner_config
 {
    public:
