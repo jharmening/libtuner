@@ -233,68 +233,78 @@ int nxt2004::init(void)
    {
       return error;
    }
+   
    const char *fwfile = m_config.get_string(NXT2004_FW_KEY);
    if (fwfile == NULL)
    {
       LIBTUNERERR << "nxt2004: Firmware file not configured" << endl;
       return ENOENT;
    }
-   buffer[0] = 0x2B;
-   buffer[1] = 0x80;
-   error = m_device.write(buffer, 2);
-   tuner_firmware fw(m_config, fwfile, error);
-   if (error)
-   {
-      LIBTUNERERR << "nxt2004: Unable to create firmware image: " << strerror(errno) << endl;
-      return error;
-   }
-   uint8_t *fwdata = reinterpret_cast<uint8_t*>(fw.buffer());
-   buffer[0] = 0x29;
-   buffer[1] = 0x10;
-   buffer[2] = 0x00;
-   buffer[3] = 0x81;
-   error = (error ? error : m_device.write(buffer, 4));
-   
-   LIBTUNERLOG << "nxt2004: Loading firmware..." << endl;
-   buffer[0] = 0x2C;
-   uint16_t crc = 0;
-   size_t offset = 0;
-   for (size_t i = 0; i < fw.length(); ++i)
-   {
-      uint16_t comparand = (uint16_t)(fwdata[i]) << 8;
-      for (uint8_t shift = 0; shift < 8; ++shift)
-      {
-         crc <<= 1;
-         if ((crc ^ comparand) & (1 << 15))
-         {
-            crc ^= CCITT_DIVISOR;
-         }
-         comparand <<= 1;
-      }
-      size_t bufindex = i - offset + 1;
-      buffer[bufindex] = fwdata[i];
-      if ((bufindex == 255) || (i == (fw.length() - 1)))
-      {
-         error = m_device.write(buffer, bufindex + 1);
-         if (error)
-         {
-            break;
-         }
-         offset = i + 1;
-      }
-   }
-   buffer[1] = crc >> 8;
-   buffer[2] = crc & 0xFF;
-   error = (error ? error : m_device.write(buffer, 3));
-   LIBTUNERLOG << "nxt2004: Finished" << endl;
-
-   error = (error ? error : m_device.transact(buffer, 1, &(buffer[1]), 1));
-   buffer[0] = 0x2B;
-   buffer[1] = 0x80;
-   error = (error ? error : m_device.write(buffer, 2));
    buffer[0] = 0x19;
-   buffer[1] = 0x1;
-   error = (error ? error : m_device.write(buffer, 2));
+   error = (error ? error : m_device.transact(buffer, 1, &buffer[1], 1));
+   tuner_firmware fw(m_config, fwfile, error);
+   if (!error && ((buffer[1] != 0x1) || !fw.up_to_date()))
+   {
+      buffer[0] = 0x2B;
+      buffer[1] = 0x80;
+      error = m_device.write(buffer, 2);
+      if (error)
+      {
+         LIBTUNERERR << "nxt2004: Unable to create firmware image: " << strerror(errno) << endl;
+         return error;
+      }
+      uint8_t *fwdata = reinterpret_cast<uint8_t*>(fw.buffer());
+      buffer[0] = 0x29;
+      buffer[1] = 0x10;
+      buffer[2] = 0x00;
+      buffer[3] = 0x81;
+      error = (error ? error : m_device.write(buffer, 4));
+      
+      LIBTUNERLOG << "nxt2004: Loading firmware..." << endl;
+      buffer[0] = 0x2C;
+      uint16_t crc = 0;
+      size_t offset = 0;
+      for (size_t i = 0; i < fw.length(); ++i)
+      {
+         uint16_t comparand = (uint16_t)(fwdata[i]) << 8;
+         for (uint8_t shift = 0; shift < 8; ++shift)
+         {
+            crc <<= 1;
+            if ((crc ^ comparand) & (1 << 15))
+            {
+               crc ^= CCITT_DIVISOR;
+            }
+            comparand <<= 1;
+         }
+         size_t bufindex = i - offset + 1;
+         buffer[bufindex] = fwdata[i];
+         if ((bufindex == 255) || (i == (fw.length() - 1)))
+         {
+            error = m_device.write(buffer, bufindex + 1);
+            if (error)
+            {
+               break;
+            }
+            offset = i + 1;
+         }
+      }
+      buffer[1] = crc >> 8;
+      buffer[2] = crc & 0xFF;
+      error = (error ? error : m_device.write(buffer, 3));
+      LIBTUNERLOG << "nxt2004: Finished" << endl;
+
+      error = (error ? error : m_device.transact(buffer, 1, &(buffer[1]), 1));
+      buffer[0] = 0x2B;
+      buffer[1] = 0x80;
+      error = (error ? error : m_device.write(buffer, 2));
+      buffer[0] = 0x19;
+      buffer[1] = 0x1;
+      error = (error ? error : m_device.write(buffer, 2));
+      if (!error)
+      {
+         fw.update();
+      }
+   }
 
    // ???
    error = (error ? error : init_microcontroller());
