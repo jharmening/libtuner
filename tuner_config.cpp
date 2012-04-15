@@ -69,9 +69,6 @@ int tuner_config::load(istream &stream, char line_delim)
          string ident = line.substr(token_begin, token_end - token_begin);
          token_begin = line.find_first_not_of(DELIMS, token_end);
          if (token_begin == string::npos)
-
-
-
          {
             LIBTUNERERR << "line " << lineno << ": Warning: skipped identifier without value" << endl;
             continue;
