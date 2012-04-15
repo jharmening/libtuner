@@ -67,17 +67,18 @@ int tuner_config::load(istream &stream, char line_delim)
             continue;
          }
          string ident = line.substr(token_begin, token_end - token_begin);
-         transform(ident.begin(), ident.end(), ident.begin(), (int(*)(int))std::tolower);
          token_begin = line.find_first_not_of(DELIMS, token_end);
          if (token_begin == string::npos)
+
+
+
          {
             LIBTUNERERR << "line " << lineno << ": Warning: skipped identifier without value" << endl;
             continue;
          }
          token_end = line.find_last_not_of(WHITESPACE) + 1;
          string value = line.substr(token_begin, token_end);
-         m_map.erase(ident);
-         m_map.insert(pair<string, string> (ident, value));
+         set_string(ident, value);
       }
    }
    catch(...)
@@ -101,9 +102,7 @@ int tuner_config::load_file(const char *filename)
 
 int tuner_config::load_string(const char *str)
 {
-   string s(str);
-   istringstream strstream(s);
-   return load(strstream);
+   return load_string(str, '\n');
 }
 
 int tuner_config::load_string(const char *str, char line_delim)
@@ -111,6 +110,28 @@ int tuner_config::load_string(const char *str, char line_delim)
    string s(str);
    istringstream strstream(s);
    return load(strstream, line_delim);
+}
+
+int tuner_config::set_string(const char *key, const char *value)
+{
+   int error = 0;
+   try
+   {
+      string keystr(key), valstr(value);
+      set_string(keystr, valstr);
+   }
+   catch(...)
+   {
+      error = ENOMEM;
+   }
+   return error;
+}
+
+void tuner_config::set_string(string &key, string &value)
+{
+   transform(key.begin(), key.end(), key.begin(), (int(*)(int))std::tolower);
+   m_map.erase(key);
+   m_map.insert(pair<string, string> (key, value));
 }
 
 const char *tuner_config::get_string(const char *key)

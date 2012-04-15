@@ -56,11 +56,13 @@ class tuner_config
       virtual ~tuner_config(void) {}
 
       int load_file(const char *filename);
-      
+
       int load_string(const char *str);
-      
+
       int load_string(const char *str, char line_delim);
       
+      int set_string(const char *key, const char *value);
+
       const char *get_string(const char *key);
             
       template <typename numtype> 
@@ -100,6 +102,8 @@ class tuner_config
       int load(std::istream &stream, char line_delim = '\n');
       
       const char *get_config_string(const char *key);
+
+      void set_string(std::string &key, std::string &value);
         
       typedef std::map<std::string, std::string> strmap;
       
