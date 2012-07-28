@@ -1,7 +1,8 @@
+.include "libtuner.ver"
+
 CXXFLAGS ?= -O2 
 CXXFLAGS += -Wall
 
-LIBTUNER_MAJOR ?= 1
 INSTALLDIR ?= /usr/local
 DATADIR ?= $(PREFIX)/share/libtuner
 
