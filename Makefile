@@ -37,6 +37,8 @@ SRCS = tuner_device.h tuner_device.cpp \
        tuv1236d.h tuv1236d.cpp \
        nxt2004.h nxt2004.cpp
 
+NO_PROFILE=
+LIB = tuner
 SHLIB = tuner
 SHLIB_MAJOR = $(LIBTUNER_MAJOR)
 
