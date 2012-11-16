@@ -55,7 +55,8 @@ enum avb_video_fmt_t
    AVB_VIDEO_FMT_SECAM_G,
    AVB_VIDEO_FMT_SECAM_H,
    AVB_VIDEO_FMT_SECAM_K,
-   AVB_VIDEO_FMT_SECAM_K1
+   AVB_VIDEO_FMT_SECAM_K1,
+   AVB_VIDEO_FMT_SECAM_K3
 };
 
 enum avb_audio_fmt_t
@@ -82,7 +83,7 @@ enum avb_audio_fmt_t
 
 #define AVB_FORMAT_IS_NTSC(fmt) (fmt <= AVB_VIDEO_FMT_NTSC_443)
 #define AVB_FORMAT_IS_PAL(fmt) ((fmt >= AVB_VIDEO_FMT_PAL_B) && (fmt <= AVB_VIDEO_FMT_PAL_60))
-#define AVB_FORMAT_IS_SECAM(fmt) ((fmt >= AVB_VIDEO_FMT_SECAM_L) && (fmt <= AVB_VIDEO_FMT_SECAM_K1))
+#define AVB_FORMAT_IS_SECAM(fmt) ((fmt >= AVB_VIDEO_FMT_SECAM_L) && (fmt <= AVB_VIDEO_FMT_SECAM_K3))
 
 typedef struct
 {

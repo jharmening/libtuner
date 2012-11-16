@@ -454,7 +454,7 @@ int xc5000::start(uint32_t timeout_ms)
 {
    uint32_t time_slept = 0;
    int error = 0;
-   do
+   for (;;)
    {
       uint16_t locked = 0;
       error = read_reg(XC5000_REG_LOCK, locked);
@@ -462,10 +462,13 @@ int xc5000::start(uint32_t timeout_ms)
       {
          return error;
       }
+      if (time_slept >= timeout_ms)
+      {
+         break;
+      }
       usleep(50000);
       time_slept += 50;
    }
-   while (time_slept < timeout_ms);
    LIBTUNERERR << "xc5000: tuner not locked" << endl;
    return ETIMEDOUT;
 }

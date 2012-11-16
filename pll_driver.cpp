@@ -114,21 +114,21 @@ int pll_driver::start(uint32_t timeout_ms)
       uint32_t time_slept = 0;
       bool locked = false;
       uint8_t status = 0;
-      do
+      for (;;)
       {
-         usleep(50000);
          error = m_device.read(&status, sizeof(status));
-         if (error)
-         {
-            break;
-         }
-         if (status & (1 << 6))
+         if (!error && (status & (1 << 6)))
          {
             locked = true;
             break;
          }
+         if (time_slept >= timeout_ms)
+         {
+            break;
+         }
+         usleep(50000);
          time_slept += 50;
-      } while (time_slept < timeout_ms);
+      }
       if (!locked)
       {
          LIBTUNERERR << "PLL timed out waiting for lock" << std::endl;

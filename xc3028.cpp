@@ -1,6 +1,6 @@
-/*-
- * xc3028.cpp 
- *  Copyright 2008 Fritz Katz, Jason Harmening
+/*- 
+ * Copyright 2008 Fritz Katz
+ * Copyright 2012 Jason Harmening
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <sys/endian.h>
 #include <sys/errno.h>
 #include <math.h>
+#include <new>
 #include "tuner_firmware.h"
 #include "xc3028.h"
 
@@ -42,29 +43,40 @@
 #define XC3028_7MHZ_UHF_FREQ 470000000
 #define XC3028_DIVIDER       15625
 
+using namespace std;
+
 xc3028::xc3028(
    tuner_config &config,
    tuner_device &device,
    xc3028_reset_callback_t callback,
    void *callback_context,
-   int &error,
-   uint32_t firmware_flags, // = 0
-   uint32_t ifreq_hz /*= 0*/)
+   int &error)
    : tuner_driver(config, device),
      dvb_driver(config, device),
      avb_driver(config, device),
      m_callback(callback),
      m_callback_context(callback_context),
      m_firmware(NULL),
-     m_fw_segs(NULL),
-     m_current_fw(NULL),
-     m_frequency_hz(0),
-     m_ifreq_hz(ifreq_hz),
-     m_default_flags(firmware_flags),
-     m_flags(0),
-     m_format(0),
-     m_num_segs(0),
-     m_num_base_images(0)
+     m_base_fws(NULL),
+     m_num_base_fws(0),
+     m_dvb_fws(NULL),
+     m_num_dvb_fws(0),
+     m_avb_fws(NULL),
+     m_num_avb_fws(0),
+     m_scode_fws(NULL),
+     m_num_scode_fws(0),
+     m_main_fw_offset(0),
+     m_current_base(NULL),
+     m_current_dvb(NULL),
+     m_current_avb(NULL),
+     m_current_scode(NULL),
+     m_firmware_ver(0),
+     m_base_flags(0),
+     m_dvb_flags(0),
+     m_avb_flags(0),
+     m_scode_flags(0),
+     m_scode_ifreq_khz(0),
+     m_scode_index(0)
 {
    if (error)
    {
@@ -74,274 +86,448 @@ xc3028::xc3028(
    if (fwfile == NULL)
    {
       LIBTUNERERR << "XC3028 firmware file not configured" << endl;
-      return ENOENT;
+      error = ENOENT;
    }
-   m_firmware = new tuner_firmware(fwfile, error);
+   m_firmware = new(nothrow) tuner_firmware(config, fwfile, error);
    if (m_firmware == NULL)
    {
       error = ENOMEM;
    }
-   if (error) || (m_firmware->length() < sizeof(*m_fw_segs)))
+   if (error || (m_firmware->length() < sizeof(m_firmware_ver)))
    {
       return;
    }
    char *buf = reinterpret_cast<char*>(m_firmware->buffer());
-   char *end = buf + m_firmware->length();
-   uint16_t segindex = 0;
-   m_num_segs = le16toh(*(reinterpret_cast<uint16_t*>(buf)));
-   m_fw_segs = new xc3028_fw_header[m_num_segs];
-   if (m_fw_segs == NULL)
+   m_firmware_ver = le16toh(*(reinterpret_cast<uint16_t*>(buf)));
+   size_t i = sizeof(m_firmware_ver);
+   while ((i + sizeof(fw_section_header)) <= m_firmware->length())
    {
-      error = ENOMEM;
-      return;
-   }
-   buf += sizeof(uint16_t);
-   while (((buf + sizeof(xc3028_fw_header)) <= m_firmware->length()) && (segindex < m_num_segs))
-   {
-      m_fw_segs[segindex].flags = le32toh(*(reinterpret_cast<uint32_t*>(buf)));
-      m_fw_segs[segindex].size = le16toh(*(reinterpret_cast<uint16_t*> (buf)));
-      buf += (sizeof(uint32_t) + sizeof(uint16_t));
-      if ((m_num_base_images == 0) && !(m_fw_segs[segindex].flags & XC3028_FWFLAG_BASE))
+      fw_section_header header = *((fw_section_header*)(buf + i));
+      i += sizeof(header);
+      header.type = le16toh(header.type);
+      if (header.type == XC3028_FW_TYPE_MAIN)
       {
-         m_num_base_images = segindex;
+         m_main_fw_offset = i;      
+         break;
       }
-      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_VIDEO_FORMAT)
+      header.num_firmwares = le16toh(header.num_firmwares);
+      switch (header.type)
       {
-         m_fw_segs[segindex].video_format = le32toh(*(reinterpret_cast<uint32_t*> (buf)));
-         buf += sizeof(uint32_t);
+         case XC3028_FW_TYPE_BASE:
+            m_base_fws = (base_fw_header*)(buf + i);
+            m_num_base_fws = header.num_firmwares;
+            i += (m_num_base_fws * sizeof(*m_base_fws));
+            break;
+         case XC3028_FW_TYPE_DVB:
+            m_dvb_fws = (dvb_fw_header*)(buf + i);
+            m_num_dvb_fws = header.num_firmwares;
+            i += (m_num_dvb_fws * sizeof(*m_dvb_fws));
+            break;
+         case XC3028_FW_TYPE_AVB:
+            m_avb_fws = (avb_fw_header*)(buf + i);
+            m_num_avb_fws = header.num_firmwares;
+            i += (m_num_avb_fws * sizeof(*m_avb_fws));
+            break;
+         case XC3028_FW_TYPE_SCODE:
+            m_scode_fws = (scode_fw_header*)(buf + i);
+            m_num_scode_fws = header.num_firmwares;
+            i += (m_num_scode_fws * sizeof(*m_scode_fws));
+            break;
+         default:
+            LIBTUNERERR << "XC3028: Unrecognized firmware type " << header.type << " at offset " << i << endl;
+            error = EINVAL;
+            return;
       }
-      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_AUDIO_FORMAT)
+      if (i >= m_firmware->length())
       {
-         m_fw_segs[segindex].audio_format = le32toh(*(reinterpret_cast<uint32_t*> (buf)));
-         buf += sizeof(uint32_t); 
-      }
-      if (m_fw_segs[segindex].flags & XC3028_FWFLAG_IFREQ)
-      {
-         m_fw_segs[segindex].ifreq_hz = le32toh(*(reinterpret_cast<uint32_t*> (buf)));
-         buf += sizeof(uint32_t);
-      }
-      if ((buf + size) > end)
-      {
-         LIBTUNERERR << "xc3028: size of firmware " << segindex << " extends beyond end of file" << endl;
+         LIBTUNERERR << "XC3028: Unexpected end of firmware file" << endl;
          error = EINVAL;
          return;
       }
-      buf += size;
-      ++segindex;  
-   }
-   if (segindex < m_num_segs)
-   {
-      LIBTUNERERR << "xc3028: corrupt firmware; found " << segindex << " images, expected " << m_num_segs << endl;
-      error = EINVAL;
    }
 }
 
 xc3028::~xc3028(void)
 {
+   reset();
    delete m_firmware;
    m_firmware = NULL;
-   delete[] m_fw_segs;
-   m_fw_segs = NULL;
-   m_num_segs = 0;
 }
 
-int xc3028::load_firmware(const char *filename, bool force)
+void xc3028::reset(void)
 {
-   if (filename == NULL)
-   {
-      DIAGNOSTIC(LIBTUNERLOG << "XC3028: loadfirmware NULL filename" << endl )
-      return EINVAL;
-   }
-   DIAGNOSTIC(LIBTUNERLOG << "XC3028: load_firmware:" << filename << endl )
-   
-   int error = 0;
-   tuner_firmware fw(filename, error);
-   if (error || (!force && fw.up_to_date ()))
-   {
-      DIAGNOSTIC(LIBTUNERLOG << "XC3028: NOT updating firmware" << endl)
-      return error;
-   }
-   DIAGNOSTIC(LIBTUNERLOG << "XC3028: Updating firmware" << endl)
-   uint32_t size_a = le32toh(*((uint32_t*)(fw.buffer())));
-   uint32_t size_b = le32toh(*(((uint32_t*)(fw.buffer())) + 1));
-   uint8_t *fw_bytes = (uint8_t*)(fw.buffer());
-   uint8_t buffer[8];
-   int bytes_read;
-   if (!error && size_a && (fw.length() > 8))
-   {
-      error = m_device.write(fw_bytes + 8, size_a);
-   }
-   if (!error && size_b && (fw.length() > (size_a + 8)))
-   {
-      /*TODO: Are these sleeps really necessary? They were lifted from the Linux driver...*/
-      usleep(1000);
-      error = m_device.write(fw_bytes + size_a + 8, size_b);
-   }
-   if (!error)
-   {
-      usleep(1000);
-      buffer[0] = 0x7F;
-      buffer[1] = 0x01;
-      error = m_device.write(buffer, 2);
-   }
-   if (!error)
-   {
-      usleep(20000);
-      error = m_device.write(buffer, 2);
-   }
-   if (!error)
-   {
-      usleep(70000);
-      buffer[0] = 0x10;
-      buffer[1] = 0x10;
-      buffer[2] = 0x00;
-      error = m_device.write(buffer, 3);
-   }
-   if (!error)
-   {
-      usleep(20000);
-      buffer[0] = 0x04;
-      buffer[1] = 0x17;
-      error = m_device.write(buffer, 2);
-   }
-   if (!error)
-   {
-      usleep(20000);
-      buffer[0] = 0x00;
-      buffer[1] = 0x00;
-      error = m_device.write(buffer, 2);
-   }
-   for (bytes_read = 0; (!error && (bytes_read < 8)); bytes_read += 2)
-   {
-      usleep(20000);
-      error = m_device.read(buffer + bytes_read, 2);
-   }
-   if (!error)
-   {
-      DIAGNOSTIC(LIBTUNERLOG << "XC3028 Firmware rev. " << setfill('0') << hex <<
-         setw(2) << (int)(buffer[1]) << setw(2) << (int)(buffer[0]) << setw(2) << (int)(buffer[3]) << 
-         setw(2) << (int)(buffer[2]) << '-' << setw(2) << (int)(buffer[5]) << setw(2) << (int)(buffer[4]) << 
-         setw(2) << (int)(buffer[7]) << setw(2) << (int)(buffer[6]) << dec << endl)
-      usleep(20000);
-      buffer[0] = 0x10;
-      buffer[1] = 0x00;
-      buffer[2] = 0x00;
-      error = m_device.write(buffer, 3);
-   }
-   if (!error)
-   {
-      fw.update();  
-   }
-   return error;
-}
-/**
- * Analog PAL/NTSC/SECAM tuning?
- */
-int xc3028::set_channel(const avb_channel &channel)
-{
-   int error = pll_driver::set_channel(channel);
-   if (!error && (channel.bandwidth_hz == 7000000))
-   {
-      m_buffer[PLL_BANDSWITCH_BYTE] |= 0x10;
-   }
-   return error;
+   static const uint8_t power_down[] = {0x80, 0x8, 0x0, 0x0};
+   m_device.write(power_down, sizeof(power_down));
+   m_current_base = NULL;
 }
 
-
-int xc3028::start(uint32_t timeout_ms)
+int xc3028::load_base_fw(uint16_t flags)
 {
-   int error = 0;
-   uint8_t buffer[3];
-   buffer[0] = 0x04;
-   buffer[1] = 0x01;
-   switch (m_mode)
+   flags |= m_base_flags;
+   for (uint16_t i = 0; i < m_num_base_fws; ++i)
    {
-      case XC3028_MODE_VSB:
-         buffer[2] = 0x50;
-         break;
-      case XC3028_MODE_QAM64:
-      case XC3028_MODE_QAM256:
-      case XC3028_MODE_QAM_AUTO:
-         buffer[2] = 0x5F;
-         break;
-      default:
-         LIBTUNERERR << "XC3028: Unable to start device: modulation not configured" << endl;
-         return ENXIO;
+      uint16_t hdrflags = le16toh(m_base_fws[i].flags);
+      if ((hdrflags & flags) == flags)
+      {
+         if (m_current_base != &m_base_fws[i])
+         {
+            int error = 0;
+            if (m_callback != NULL)
+            {
+               error = m_callback(XC3028_TUNER_RESET, m_callback_context);
+            }
+            error = (error ? error : send_firmware(m_base_fws[i].common, "base", i)); 
+            if (!error)
+            {
+               m_current_base = &m_base_fws[i];
+               m_current_dvb = NULL;
+               m_current_avb = NULL;
+               m_current_scode = NULL;
+            }
+            return error;
+         }
+         return 0;
+      }
    }
-   if ((error = m_device.write(buffer, sizeof(buffer))))
+   return ENOENT;
+}
+
+int xc3028::load_dvb_fw(uint16_t flags, dvb_modulation_t modulation)
+{
+   uint16_t modulation_mask = ((modulation == DVB_MOD_UNKNOWN) ? 0 : (1 << modulation));
+   flags |= m_dvb_flags;
+   for (uint16_t i = 0; i < m_num_dvb_fws; ++i)
    {
-      LIBTUNERERR << "XC3028: Unable to start device: failed to set operation mode" << endl;
-      m_mode = XC3028_MODE_UNKNOWN;
+      uint16_t hdrmodmask = le16toh(m_dvb_fws[i].modulation_mask);
+      uint16_t hdrflags = le16toh(m_dvb_fws[i].flags);
+      if (((hdrmodmask & modulation_mask) == modulation_mask) &&
+          ((hdrflags & flags) == flags))
+      {
+         m_current_avb = NULL;
+         if (m_current_dvb != &m_dvb_fws[i])
+         {
+            int error = send_firmware(m_dvb_fws[i].common, "DVB", i);
+            if (!error)
+            {
+               m_current_dvb = &m_dvb_fws[i];
+               m_current_scode = NULL;
+            }
+            return error;
+         }
+         return 0;
+      }
+   }
+   return ENOENT;
+}
+
+int xc3028::load_avb_fw(uint16_t flags, avb_video_fmt_t video_fmt, avb_audio_fmt_t audio_fmt)
+{
+   uint32_t video_mask = ((video_fmt == AVB_VIDEO_FMT_NONE) ? 0 : (1 << video_fmt));
+   uint32_t audio_mask = ((audio_fmt == AVB_AUDIO_FMT_NONE) ? 0 : (1 << audio_fmt));
+   flags |= m_avb_flags;
+   for (uint16_t i = 0; i < m_num_avb_fws; ++i)
+   {
+      uint32_t hdrvmask = le32toh(m_avb_fws[i].video_fmt_mask);
+      uint32_t hdramask = le32toh(m_avb_fws[i].audio_fmt_mask);
+      uint16_t hdrflags = le16toh(m_avb_fws[i].flags);
+      if (((hdrvmask & video_mask) == video_mask) &&
+          ((hdramask & audio_mask) == audio_mask) &&
+          ((hdrflags & flags) == flags))
+      {
+         m_current_dvb = NULL;
+         if (m_current_avb != &m_avb_fws[i])
+         {
+            int error = send_firmware(m_avb_fws[i].common, "AVB", i);
+            if (!error)
+            {
+               m_current_avb = &m_avb_fws[i];
+               m_current_scode = NULL;
+            }
+            return error;
+         }
+         return 0;
+      }
+   }
+   return ENOENT;
+}
+
+int xc3028::load_scode_fw(uint16_t flags, uint16_t ifreq_khz)
+{
+   flags |= m_scode_flags;
+   ifreq_khz = (m_scode_ifreq_khz ? m_scode_ifreq_khz : ifreq_khz);
+   if (!flags && !ifreq_khz)
+   {
+      return 0;
+   }
+   scode_fw_header *fw = NULL;
+   for (uint16_t i = 0; i < m_num_scode_fws; ++i)
+   {
+      uint16_t hdrifreq = le16toh(m_scode_fws[i].ifreq_khz);
+      uint16_t hdrflags = le16toh(m_scode_fws[i].flags);
+      if ((!ifreq_khz || (hdrifreq == ifreq_khz)) && ((hdrflags & flags) == flags))
+      {
+         fw = &m_scode_fws[i];
+         break;
+      }
+   }
+   if (fw == NULL)
+   {
+      return ENOENT;
+   }
+   else if (fw != m_current_scode)
+   {
+      uint32_t size = le32toh(fw->common.size);
+      if (((m_scode_index + 1) * 12) > size)
+      {
+         return EINVAL;
+      }
+      uint32_t offset = m_main_fw_offset + le32toh(fw->common.offset) + (m_scode_index * 12);
+      static const uint8_t scode_pre[] = {0xA0, 0x00, 0x00, 0x00};
+      static const uint8_t scode_post[] = {0x00, 0x8C};
+      int error = m_device.write(scode_pre, sizeof(scode_pre));
+      error = (error ? error : m_device.write((uint8_t*)m_firmware->buffer() + offset, 12));
+      error = (error ? error : m_device.write(scode_post, sizeof(scode_post)));
+      if (!error)
+      {
+         m_current_scode = fw;
+      }
       return error;
-   }
-   usleep(20000);
-   buffer[0] = 0x1C;
-   if (m_mode == XC3028_MODE_VSB)
-   {
-      buffer[1] = 0x03;
-   }
-   else
-   {
-      buffer[1] = 0x00;
-   }
-   buffer[2] = m_mode;
-   if ((error = m_device.write(buffer, sizeof(buffer))))
-   {
-      LIBTUNERERR << "XC3028: Unable to start device: failed to set receiver/channel mode" << endl;
-      m_mode = XC3028_MODE_UNKNOWN;
-      return error;
-   }
-   usleep(30000);
-   uint8_t status = 0;
-   uint32_t time_slept = 0;
-   bool locked = false;
-   do
-   {
-      if ((m_mode = get_mode(status)) == XC3028_MODE_UNKNOWN)
-      {
-         return ENXIO;
-      }
-      if (status & 0x01)
-      {
-         locked = true;
-         break;
-      }
-      usleep(20000);
-      time_slept += 50;
-   } while (time_slept < timeout_ms);
-   if (!locked)
-   {
-      LIBTUNERERR << "XC3028: demodulator not locked" << endl;
-      return ETIMEDOUT;
-   }
-   else
-   {
-      unsigned int delay = m_config.get_number<unsigned int>(XC3028_DELAY_KEY);
-      if (delay == 0)
-      {
-         delay = XC3028_DEFAULT_DELAY;
-      }
-      usleep(delay);
    }
    return 0;
 }
 
-uint8_t xc3028::get_mode(uint8_t &status)
+int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint16_t fwtypeindex)
 {
-   static uint8_t buffer[] = {0x04, 0x00};
-   uint8_t full_status[2];
    int error = 0;
-   if ((error = m_device.write(buffer, sizeof(buffer))))
+   uint32_t offset = m_main_fw_offset + le32toh(header.offset);
+   uint32_t size = le32toh(header.size);
+   if ((offset + size) > m_firmware->length())
    {
-      LIBTUNERERR << "XC3028: Failed to request demodulator status" << endl;
-      return XC3028_MODE_UNKNOWN;
+      LIBTUNERERR << "XC3028: Invalid header for " << fwtypename << " " << fwtypeindex << "; extends beyond end of file" << endl;
+      return EINVAL;
    }
-   usleep(30000);
-   if ((error = m_device.read(full_status, sizeof(full_status))))
+   if (offset < m_main_fw_offset)
    {
-      LIBTUNERERR << "XC3028: Failed to receive demodulator status" << endl;
-      return XC3028_MODE_UNKNOWN;
+      LIBTUNERERR << "XC3028: Invalid header for " << fwtypename << " firmware " << fwtypeindex << "; begins before main firmware area" << endl;
+      return EINVAL;
    }
-   status = full_status[1];
-   return full_status[0];
+   if ((offset + size) < offset)
+   {
+      LIBTUNERERR << "XC3028: Invalid header for " << fwtypename << " firmware " << fwtypeindex << "; wraps to beginning of file" << endl;
+      return EINVAL;
+   }
+   char *buf = reinterpret_cast<char*>(m_firmware->buffer()) + offset;
+   uint32_t i = 0;
+   while (!error && (i < (size - 1)))
+   {
+      uint16_t chunksize = be16toh(*(reinterpret_cast<uint16_t*>(buf + i)));
+      i += sizeof(uint16_t);
+      switch (chunksize)
+      {
+         case 0:
+            if (m_callback != NULL)
+            {
+               error = m_callback(XC3028_TUNER_RESET, m_callback_context);
+            }
+            break;
+         case 0xFF00:
+            if (m_callback != NULL)
+            {
+               error = m_callback(XC3028_CLOCK_RESET, m_callback_context);
+            }
+            break;
+         case 0xFFFF:
+            return 0;
+         default:
+            if (chunksize > 0xFF00)
+            {
+               LIBTUNERERR << "XC3028: Unrecognized reset command for " << fwtypename << " firmware " << fwtypeindex << ": " << (chunksize & 0xFF) << endl;
+               return EINVAL;
+            }
+            else if (chunksize & 0x8000)
+            {
+               usleep((chunksize & 0x7FFF) * 1000);
+            }
+            else if (((i + chunksize) > size) || ((i + chunksize) < i))
+            {
+               LIBTUNERERR << "XC3028: Invalid chunk size for " << fwtypename << " firmware " << fwtypeindex << " at offset " << i << endl;
+               return EINVAL;
+            }
+            else
+            {
+               uint8_t chunk[64];
+               chunk[0] = buf[i++];
+               uint16_t remaining = chunksize - 1;
+               while (!error && remaining)
+               {
+                  uint16_t transfer = ((remaining > (sizeof(chunk) - 1)) ? (sizeof(chunk) - 1) : remaining);
+                  memcpy(&chunk[1], &buf[i], transfer);
+                  error = m_device.write(chunk, transfer + 1);
+                  remaining -= transfer;
+                  i += transfer;
+               }
+            }
+            break;
+      }
+   }
+   return error;
 }
+
+void xc3028::set_firmware_flags(
+   uint16_t base_fw_flags,
+   uint16_t dvb_fw_flags,
+   uint16_t avb_fw_flags,
+   uint16_t scode_fw_flags,
+   uint16_t scode_ifreq_khz,
+   uint8_t scode_index)
+{
+   m_base_flags = base_fw_flags;
+   m_dvb_flags = dvb_fw_flags;
+   m_avb_flags = avb_fw_flags;
+   m_scode_flags = scode_fw_flags;
+   m_scode_ifreq_khz = scode_ifreq_khz;
+   m_scode_index = scode_index;
+   if ((m_base_flags & XC3028_BASEFW_MTS) || (m_avb_flags & XC3028_AVBFW_MTS))
+   {
+      m_base_flags |= XC3028_BASEFW_MTS;
+      m_avb_flags |= XC3028_AVBFW_MTS;
+   }
+}
+
+int xc3028::set_channel(const dvb_channel &channel, dvb_interface &interface)
+{
+   uint16_t base_flags = 0, dvb_flags = 0;
+   uint64_t frequency_hz = channel.frequency_hz;
+   switch (channel.bandwidth_hz)
+   {
+      case 6000000:
+         dvb_flags |= XC3028_DVBFW_6MHZ;
+         frequency_hz -= 1750000;
+         break;
+      case 7000000:
+         dvb_flags |= XC3028_DVBFW_7MHZ;
+         base_flags |= XC3028_BASEFW_8MHZ;
+         frequency_hz -= 2750000;
+         break;
+      case 8000000:
+         dvb_flags |= XC3028_DVBFW_8MHZ;
+         base_flags |= XC3028_BASEFW_8MHZ;
+         frequency_hz -= 2750000;
+         break;
+      default:
+         return EINVAL;
+   }
+   int error = load_base_fw(base_flags);
+   error = (error ? error : load_dvb_fw(dvb_flags, channel.modulation));
+   load_scode_fw(0, 0);
+   error = (error ? error : set_frequency(frequency_hz));
+   return error;
+}
+
+int xc3028::set_channel(const avb_channel &channel)
+{
+   uint16_t base_flags;
+   switch (channel.video_format)
+   {
+      case AVB_VIDEO_FMT_NTSC_M:
+      case AVB_VIDEO_FMT_NTSC_N:
+      case AVB_VIDEO_FMT_NTSC_J:
+      case AVB_VIDEO_FMT_NTSC_443:
+      case AVB_VIDEO_FMT_PAL_N:
+      case AVB_VIDEO_FMT_PAL_NC:
+      case AVB_VIDEO_FMT_PAL_M:
+         base_flags = 0; 
+         break;
+      default:
+         base_flags = XC3028_BASEFW_8MHZ; 
+         break;
+   }
+   bool radio = false;
+   switch (channel.audio_format)
+   {
+      case AVB_AUDIO_FMT_FM_MONO:
+      case AVB_AUDIO_FMT_FM_MONO_NON_USA:
+      case AVB_AUDIO_FMT_FM_MONO_USA:
+      case AVB_AUDIO_FMT_FM_STEREO:
+      case AVB_AUDIO_FMT_FM_STEREO_NON_USA:
+      case AVB_AUDIO_FMT_FM_STEREO_USA:
+         base_flags |= XC3028_BASEFW_FM;
+         radio = (channel.video_format == AVB_VIDEO_FMT_NONE);
+         break;
+      default:
+         break;
+   }
+   int error = load_base_fw(base_flags);
+   error = (error ? error : load_avb_fw(0, channel.video_format, channel.audio_format));
+   load_scode_fw(0, 0);
+   if (!radio)
+   {
+      static const uint8_t tv_mode[] = {0x0, 0x0};
+      error = (error ? error : m_device.write(tv_mode, sizeof(tv_mode)));
+   }
+   error = (error ? error : set_frequency(channel.frequency_hz + 1250000 - (channel.bandwidth_hz / 2)));
+   return error;
+}
+
+int xc3028::set_frequency(uint64_t frequency_hz)
+{
+   if ((frequency_hz < XC3028_MIN_FREQ) || (frequency_hz > XC3028_MAX_FREQ))
+   {
+      return EINVAL;
+   }
+   static const uint8_t version_reg[] = {0x0, 0x4};
+   uint8_t version[2];
+   int error = m_device.transact(version_reg, sizeof(version_reg), version, sizeof(version));
+   if (error)
+   {
+      LIBTUNERERR << "xc3028: Unable to read firmware version: " << strerror(error) << endl;
+      return error;
+   }
+   if (version[1] != (m_firmware_ver >> 8))
+   {
+      LIBTUNERERR << "xc3028: Warning: Unexpected firmware version; expected " << (m_firmware_ver >> 8) << ", read " << version[1] << endl;
+   }
+   uint32_t divider = (frequency_hz + (XC3028_DIVIDER / 2)) / XC3028_DIVIDER;
+   static const uint8_t freq_cmd[] = {0x80, 0x2, 0x0, 0x0};
+   error = m_device.write(freq_cmd, sizeof(freq_cmd));
+   if (!error && (m_callback != NULL))
+   {
+      m_callback(XC3028_CLOCK_RESET, m_callback_context);
+   }
+   usleep(10000);
+   divider = htobe32(divider);
+   error = (error ? error : m_device.write((uint8_t*)(&divider), sizeof(divider)));
+   usleep(100000);
+   return error;
+}
+
+void xc3028::stop(void) {}
+
+bool xc3028::is_locked(void)
+{
+   static const uint8_t lock_reg[] = {0x0, 0x2};
+   uint8_t lock[2];
+   if (m_device.transact(lock_reg, sizeof(lock_reg), lock, sizeof(lock)) != 0)
+   {
+      return false;
+   }
+   return ((lock[0] == 0) && (lock[1] == 1));
+}
+
+int xc3028::start(uint32_t timeout_ms)
+{
+   uint32_t time_slept = 0;
+   bool locked = false;
+   while (!(locked = is_locked()) && (time_slept < timeout_ms))
+   {
+      usleep(50000);
+      time_slept += 50;
+   }
+   if (!locked)
+   {
+      LIBTUNERERR << "xc3028: tuner not locked" << endl;
+      return ETIMEDOUT;
+   }
+   return 0;
+}
+

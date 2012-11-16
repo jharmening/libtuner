@@ -1,6 +1,6 @@
 /*-
- * xc3028.h 
- *  Copyright 2008 Fritz Katz, Jason Harmening
+ * Copyright 2008 Fritz Katz
+ * Copyright 2012 Jason Harmening
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,83 +29,164 @@
 #ifndef __XC3028_H__
 #define __XC3028_H__
 
-#include "pll_driver.h"
-
-#define XC3028_FWFLAG_BASE          (1 << 0)
-#define XC3028_FWFLAG_BASE_8MHZ_BW  (1 << 1)
-#define XC3028_FWFLAG_MTS           (1 << 2)
-#define XC3028_FWFLAG_FM            (1 << 3)
-#define XC3028_FWFLAG_FM_INPUT1     (1 << 4)
-#define XC3028_FWFLAG_D2620         (1 << 5)
-#define XC3028_FWFLAG_D2633         (1 << 6)
-#define XC3028_FWFLAG_LCD_DISPLAY   (1 << 7)
-#define XC3028_FWFLAG_NO_GROUP_DEL  (1 << 8)
-#define XC3028_FWFLAG_6MHZ_DTV      (1 << 9)
-#define XC3028_FWFLAG_7MHZ_DTV      (1 << 10)
-#define XC3028_FWFLAG_7MHZ_VHF_DTV  (1 << 11)
-#define XC3028_FWFLAG_8MHZ_DTV      (1 << 12)
-#define XC3028_FWFLAG_VSB           (1 << 13)
-#define XC3028_FWFLAG_QAM           (1 << 14)
-#define XC3028_FWFLAG_MONO          (1 << 15)
-#define XC3028_FWFLAG_VIDEO_FORMAT  (1 << 16)
-#define XC3028_FWFLAG_AUDIO_FORMAT  (1 << 17)
-#define XC3028_FWFLAG_IFREQ         (1 << 18)
+#include "dvb_driver.h"
+#include "avb_driver.h"
+#include "tuner_firmware.h"
 
 class xc3028
    : public dvb_driver,
      public avb_driver
 {
    public:
-      
-      typedef struct
+
+#pragma pack(push, 1)
+
+      struct fw_section_header
       {
-         uint32_t flags;
-         uint16_t size;
-         uint32_t video_format;
-         uint32_t audio_format;
-         uint32_t ifreq_hz;
-         void *data;
-      } xc3028_fw_header;
-            
-      typedef int (*xc3028_reset_callback_t) (void*);
+         #define XC3028_FW_TYPE_BASE   0
+         #define XC3028_FW_TYPE_DVB    1
+         #define XC3028_FW_TYPE_AVB    2
+         #define XC3028_FW_TYPE_SCODE  3
+         #define XC3028_FW_TYPE_MAIN   4
+         uint16_t type;
+         uint16_t num_firmwares;
+      };
+
+      struct common_fw_header
+      {
+         uint32_t offset;
+         uint32_t size;
+      };
+
+      struct base_fw_header
+      {
+         common_fw_header common;
+         #define XC3028_BASEFW_8MHZ    (1 << 0)
+         #define XC3028_BASEFW_FM      (1 << 1)
+         #define XC3028_BASEFW_INPUT1  (1 << 2)
+         #define XC3028_BASEFW_MTS     (1 << 3)
+         uint16_t flags;
+      };
+
+      struct dvb_fw_header
+      {
+         common_fw_header common;
+         uint16_t modulation_mask;
+         #define XC3028_DVBFW_6MHZ     (1 << 0)
+         #define XC3028_DVBFW_7MHZ     (1 << 1)
+         #define XC3028_DVBFW_8MHZ     (1 << 2)
+         #define XC3028_DVBFW_78MHZ    (1 << 3) // 7MHz VHF + 8MHz UHF
+         #define XC3028_DVBFW_D2620    (1 << 4)
+         #define XC3028_DVBFW_D2633    (1 << 5)
+         uint16_t flags;
+      };
+
+      struct avb_fw_header
+      {
+         common_fw_header common;
+         uint32_t video_fmt_mask;
+         uint32_t audio_fmt_mask;
+         #define XC3028_AVBFW_MTS      (1 << 0)
+         #define XC3028_AVBFW_LCD      (1 << 1)
+         #define XC3028_AVBFW_NOGD     (1 << 2)
+         uint16_t flags;
+      };
+
+      struct scode_fw_header
+      {
+         common_fw_header common;
+         uint16_t ifreq_khz;
+         #define XC3028_SCFW_MONO      (1 << 0)
+         #define XC3028_SCFW_ATSC      (1 << 1)
+         #define XC3028_SCFW_IF        (1 << 2)
+         #define XC3028_SCFW_LG60      (1 << 3)
+         #define XC3028_SCFW_ATI638    (1 << 4)
+         #define XC3028_SCFW_OREN538   (1 << 5)
+         #define XC3028_SCFW_OREN36    (1 << 6)
+         #define XC3028_SCFW_TOYOTA388 (1 << 7)
+         #define XC3028_SCFW_TOYOTA794 (1 << 8)
+         #define XC3028_SCFW_DIBCOM52  (1 << 9)
+         #define XC3028_SCFW_ZARLINK456 (1 << 10)
+         #define XC3028_SCFW_CHINA     (1 << 11)
+         #define XC3028_SCFW_F6MHZ     (1 << 12)
+         #define XC3028_SCFW_INPUT2    (1 << 13)
+         uint16_t flags;
+      };
+
+#pragma pack(pop)
+
+      enum xc3028_reset_t
+      {
+         XC3028_TUNER_RESET,
+         XC3028_CLOCK_RESET
+      };
+
+      typedef int (*xc3028_reset_callback_t) (xc3028_reset_t, void*);
       
       xc3028(
          tuner_config &config,
          tuner_device &device,
          xc3028_reset_callback_t callback,
          void *callback_context,
-         int &error,
-         uint32_t firmware_flags = 0,
-         uint32_t ifreq_hz = 0);
+         int &error);
 
       virtual ~xc3028(void);
 
       virtual int set_channel(const avb_channel &channel);
             
-      virtual int set_channel(const dvb_channel &channel);
+      virtual int set_channel(const dvb_channel &channel, dvb_interface &interface);
 
       virtual int start(uint32_t timeout_ms);
 
-      virtual void stop(void) {}
+      virtual void stop(void);
 
-      virtual void reset(void) {}
+      virtual void reset(void);
 
-   private:
+      uint16_t get_firmware_version(void) { return m_firmware_ver; }
+
+      void set_firmware_flags(
+         uint16_t base_fw_flags,
+         uint16_t dvb_fw_flags,
+         uint16_t avb_fw_flags,
+         uint16_t scode_fw_flags,
+         uint16_t scode_ifreq_khz,
+         uint8_t scode_index);
+
+   protected:
 
       xc3028_reset_callback_t m_callback;
       void *m_callback_context;
       tuner_firmware *m_firmware;
-      xc3028_fw_header *m_fw_segs;
-      xc3028_fw_header *m_current_fw;
-      uint32_t m_frequency_hz;
-      uint32_t m_ifreq_hz;
-      uint32_t m_default_flags;
-      uint32_t m_flags;
-      uint32_t m_video_format;
-      uint32_t m_audio_format;
-      uint16_t m_num_segs;
-      uint16_t m_num_base_images;
+      base_fw_header *m_base_fws;
+      uint16_t m_num_base_fws;
+      dvb_fw_header *m_dvb_fws;
+      uint16_t m_num_dvb_fws;
+      avb_fw_header *m_avb_fws;
+      uint16_t m_num_avb_fws;
+      scode_fw_header *m_scode_fws;
+      uint16_t m_num_scode_fws;
+      size_t m_main_fw_offset;
 
+      base_fw_header *m_current_base;
+      dvb_fw_header *m_current_dvb;
+      avb_fw_header *m_current_avb;
+      scode_fw_header *m_current_scode;
+
+      uint16_t m_firmware_ver;
+      uint16_t m_base_flags;
+      uint16_t m_dvb_flags;
+      uint16_t m_avb_flags;
+      uint16_t m_scode_flags;
+      uint16_t m_scode_ifreq_khz;
+      uint8_t m_scode_index;
+
+      int load_base_fw(uint16_t flags);
+      int load_dvb_fw(uint16_t flags, dvb_modulation_t modulation);
+      int load_avb_fw(uint16_t flags, avb_video_fmt_t video_fmt, avb_audio_fmt_t audio_fmt);
+      int load_scode_fw(uint16_t flags, uint16_t ifreq_khz);
+      int send_firmware(common_fw_header &headeri, const char *fwtypename, uint16_t fwtypeindex);
+      int set_frequency(uint64_t frequency_hz);
+      bool is_locked(void);
 };
 
 #endif

@@ -308,7 +308,7 @@ int or51132::start(uint32_t timeout_ms)
    uint8_t status = 0;
    uint32_t time_slept = 30;
    bool locked = false;
-   do
+   for (;;)
    {
       if ((m_mode = get_mode(status)) == OR51132_MODE_UNKNOWN)
       {
@@ -319,9 +319,13 @@ int or51132::start(uint32_t timeout_ms)
          locked = true;
          break;
       }
+      if (time_slept >= timeout_ms)
+      {
+         break;
+      }
       usleep(20000);
       time_slept += 50;
-   } while (time_slept < timeout_ms);
+   }
    if (!locked)
    {
       LIBTUNERERR << "or51132: demodulator not locked" << endl;

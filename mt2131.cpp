@@ -110,7 +110,7 @@ int mt2131::start(uint32_t timeout_ms)
    uint32_t time_slept = 0;
    int error = 0;
    static const uint8_t stat_reg = 0x8;
-   do
+   for (;;)
    {
       uint8_t status = 0;
       error = m_device.transact(&stat_reg, 1, &status, 1);
@@ -118,10 +118,13 @@ int mt2131::start(uint32_t timeout_ms)
       {
          return error;
       }
+      if (time_slept >= timeout_ms)
+      {
+         break;
+      }
       usleep(50000);
       time_slept += 50;
    }
-   while (time_slept < timeout_ms);
    LIBTUNERERR << "[MT2131] tuner not locked" << endl;
    return ETIMEDOUT;
 }
