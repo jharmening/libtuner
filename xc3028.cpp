@@ -189,6 +189,7 @@ int xc3028::load_base_fw(uint16_t flags)
          return 0;
       }
    }
+   LIBTUNERERR << "XC3028: Unable to find base firmware image for flags " << hex << flags << endl;
    return ENOENT;
 }
 
@@ -217,6 +218,7 @@ int xc3028::load_dvb_fw(uint16_t flags, dvb_modulation_t modulation)
          return 0;
       }
    }
+   LIBTUNERERR << "XC3028: Unable to find DVB firmware image for flags " << hex << flags << ", modulation " << modulation << endl;
    return ENOENT;
 }
 
@@ -248,6 +250,8 @@ int xc3028::load_avb_fw(uint16_t flags, avb_video_fmt_t video_fmt, avb_audio_fmt
          return 0;
       }
    }
+   LIBTUNERERR << "XC3028: Unable to find AVB firmware image for flags " << hex << flags <<
+      ", video fmt " << video_fmt << ", audio fmt " << audio_fmt << endl;
    return ENOENT;
 }
 
