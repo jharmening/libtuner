@@ -440,6 +440,7 @@ int xc3028::set_channel(const avb_channel &channel)
       case AVB_VIDEO_FMT_PAL_N:
       case AVB_VIDEO_FMT_PAL_NC:
       case AVB_VIDEO_FMT_PAL_M:
+      case AVB_VIDEO_FMT_NONE:
          base_flags = 0; 
          break;
       default:
