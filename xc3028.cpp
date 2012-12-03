@@ -515,7 +515,7 @@ bool xc3028::is_locked(void)
    {
       return false;
    }
-   LIBTUNERLOG << "xc3028: lock register " << hex << lock[0] << ", " << lock[1] << endl;
+   printf("xc3028: lock registers 0x%x, 0x%x\n", lock[0], lock[1]);
    return ((lock[0] == 0) && (lock[1] == 1));
 }
 
