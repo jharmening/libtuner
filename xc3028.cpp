@@ -40,7 +40,6 @@
 #define XC3028_FW_KEY        "XC3028_FW"
 #define XC3028_MIN_FREQ      42000000
 #define XC3028_MAX_FREQ      864000000
-#define XC3028_7MHZ_UHF_FREQ 470000000
 #define XC3028_DIVIDER       15625
 
 using namespace std;
@@ -85,7 +84,7 @@ xc3028::xc3028(
    const char *fwfile = m_config.get_string(XC3028_FW_KEY);
    if (fwfile == NULL)
    {
-      LIBTUNERERR << "XC3028 firmware file not configured" << endl;
+      LIBTUNERERR << "xc3028 firmware file not configured" << endl;
       error = ENOENT;
    }
    m_firmware = new(nothrow) tuner_firmware(config, fwfile, error);
@@ -134,13 +133,13 @@ xc3028::xc3028(
             i += (m_num_scode_fws * sizeof(*m_scode_fws));
             break;
          default:
-            LIBTUNERERR << "XC3028: Unrecognized firmware type " << header.type << " at offset " << i << endl;
+            LIBTUNERERR << "xc3028: Unrecognized firmware type " << header.type << " at offset " << i << endl;
             error = EINVAL;
             return;
       }
       if (i >= m_firmware->length())
       {
-         LIBTUNERERR << "XC3028: Unexpected end of firmware file" << endl;
+         LIBTUNERERR << "xc3028: Unexpected end of firmware file" << endl;
          error = EINVAL;
          return;
       }
@@ -189,7 +188,7 @@ int xc3028::load_base_fw(uint16_t flags)
          return 0;
       }
    }
-   LIBTUNERERR << "XC3028: Unable to find base firmware image for flags " << hex << flags << endl;
+   LIBTUNERERR << "xc3028: Unable to find base firmware image for flags " << hex << flags << endl;
    return ENOENT;
 }
 
@@ -218,7 +217,7 @@ int xc3028::load_dvb_fw(uint16_t flags, dvb_modulation_t modulation)
          return 0;
       }
    }
-   LIBTUNERERR << "XC3028: Unable to find DVB firmware image for flags " << hex << flags << ", modulation " << modulation << endl;
+   LIBTUNERERR << "xc3028: Unable to find DVB firmware image for flags " << hex << flags << ", modulation " << modulation << endl;
    return ENOENT;
 }
 
@@ -250,7 +249,7 @@ int xc3028::load_avb_fw(uint16_t flags, avb_video_fmt_t video_fmt, avb_audio_fmt
          return 0;
       }
    }
-   LIBTUNERERR << "XC3028: Unable to find AVB firmware image for flags " << hex << flags <<
+   LIBTUNERERR << "xc3028: Unable to find AVB firmware image for flags " << hex << flags <<
       ", video fmt " << video_fmt << ", audio fmt " << audio_fmt << endl;
    return ENOENT;
 }
@@ -307,17 +306,17 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
    uint32_t size = le32toh(header.size);
    if ((offset + size) > m_firmware->length())
    {
-      LIBTUNERERR << "XC3028: Invalid header for " << fwtypename << " " << fwtypeindex << "; extends beyond end of file" << endl;
+      LIBTUNERERR << "xc3028: Invalid header for " << fwtypename << " " << fwtypeindex << "; extends beyond end of file" << endl;
       return EINVAL;
    }
    if (offset < m_main_fw_offset)
    {
-      LIBTUNERERR << "XC3028: Invalid header for " << fwtypename << " firmware " << fwtypeindex << "; begins before main firmware area" << endl;
+      LIBTUNERERR << "xc3028: Invalid header for " << fwtypename << " firmware " << fwtypeindex << "; begins before main firmware area" << endl;
       return EINVAL;
    }
    if ((offset + size) < offset)
    {
-      LIBTUNERERR << "XC3028: Invalid header for " << fwtypename << " firmware " << fwtypeindex << "; wraps to beginning of file" << endl;
+      LIBTUNERERR << "xc3028: Invalid header for " << fwtypename << " firmware " << fwtypeindex << "; wraps to beginning of file" << endl;
       return EINVAL;
    }
    char *buf = reinterpret_cast<char*>(m_firmware->buffer()) + offset;
@@ -345,7 +344,7 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
          default:
             if (chunksize > 0xFF00)
             {
-               LIBTUNERERR << "XC3028: Unrecognized reset command for " << fwtypename << " firmware " << fwtypeindex << ": " << (chunksize & 0xFF) << endl;
+               LIBTUNERERR << "xc3028: Unrecognized reset command for " << fwtypename << " firmware " << fwtypeindex << ": " << (chunksize & 0xFF) << endl;
                return EINVAL;
             }
             else if (chunksize & 0x8000)
@@ -354,7 +353,7 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
             }
             else if (((i + chunksize) > size) || ((i + chunksize) < i))
             {
-               LIBTUNERERR << "XC3028: Invalid chunk size for " << fwtypename << " firmware " << fwtypeindex << " at offset " << i << endl;
+               LIBTUNERERR << "xc3028: Invalid chunk size for " << fwtypename << " firmware " << fwtypeindex << " at offset " << i << endl;
                return EINVAL;
             }
             else
@@ -470,7 +469,7 @@ int xc3028::set_channel(const avb_channel &channel)
       static const uint8_t tv_mode[] = {0x0, 0x0};
       error = (error ? error : m_device.write(tv_mode, sizeof(tv_mode)));
    }
-   error = (error ? error : set_frequency(channel.frequency_hz + 1250000 - (channel.bandwidth_hz / 2)));
+   error = (error ? error : set_frequency(channel.frequency_hz));
    return error;
 }
 
@@ -516,6 +515,7 @@ bool xc3028::is_locked(void)
    {
       return false;
    }
+   LIBTUNERLOG << "xc3028: lock register " << hex << lock[0] << ", " << lock[1] << endl;
    return ((lock[0] == 0) && (lock[1] == 1));
 }
 
