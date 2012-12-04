@@ -275,10 +275,12 @@ int xc3028::load_scode_fw(uint16_t flags, uint16_t ifreq_khz)
    }
    if (fw == NULL)
    {
+      printf("xc3028: Unable to find SCODE firmware for flags 0x%x, ifreq 0x%x\n", flags, ifreq_khz);
       return ENOENT;
    }
    else if (fw != m_current_scode)
    {
+      printf("xc3028: loading SCODE firmware for flags 0x%x, ifreq 0x%x\n", flags, ifreq_khz);
       uint32_t size = le32toh(fw->common.size);
       if (((m_scode_index + 1) * 12) > size)
       {
@@ -491,6 +493,13 @@ int xc3028::set_frequency(uint64_t frequency_hz)
    {
       LIBTUNERERR << "xc3028: Warning: Unexpected firmware version; expected " << (m_firmware_ver >> 8) << ", read " << version[1] << endl;
    }
+
+   static const uint8_t hwmodel_reg[] = {0x0, 0x8};
+   uint16_t hwmodel = 0;
+   m_device.transact(hwmodel_reg, sizeof(hwmodel_reg), (uint8_t*)(&hwmodel), sizeof(hwmodel));
+   printf("xc3028: HW model %d\n", be16toh(hwmodel));
+
+
    uint32_t divider = (frequency_hz + (XC3028_DIVIDER / 2)) / XC3028_DIVIDER;
    static const uint8_t freq_cmd[] = {0x80, 0x2, 0x0, 0x0};
    error = m_device.write(freq_cmd, sizeof(freq_cmd));
