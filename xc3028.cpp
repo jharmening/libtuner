@@ -156,6 +156,7 @@ xc3028::~xc3028(void)
 void xc3028::reset(void)
 {
    static const uint8_t power_down[] = {0x80, 0x8, 0x0, 0x0};
+   printf("xc3028: powering down\n");
    m_device.write(power_down, sizeof(power_down));
    m_current_base = NULL;
 }
