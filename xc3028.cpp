@@ -473,11 +473,11 @@ int xc3028::set_channel(const avb_channel &channel)
    int error = load_base_fw(base_flags);
    error = (error ? error : load_avb_fw(0, channel.video_format, channel.audio_format));
    load_scode_fw(0, 0);
-   //if (!radio)
-   //{
+   if (!radio)
+   {
       static const uint8_t tv_mode[] = {0x0, 0x0};
       error = (error ? error : m_device.write(tv_mode, sizeof(tv_mode)));
-   //}
+   }
    error = (error ? error : set_frequency(channel.frequency_hz));
    return error;
 }
