@@ -330,14 +330,14 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
       switch (chunksize)
       {
          case 0:
-            printf("send_firmware: tuner reset\n");
+            //printf("send_firmware: tuner reset\n");
             if (m_callback != NULL)
             {
                error = m_callback(XC3028_TUNER_RESET, m_callback_context);
             }
             break;
          case 0xFF00:
-            printf("send_firmware: clock reset\n");
+            //printf("send_firmware: clock reset\n");
             if (m_callback != NULL)
             {
                error = m_callback(XC3028_CLOCK_RESET, m_callback_context);
@@ -354,7 +354,7 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
             }
             else if (chunksize & 0x8000)
             {
-               printf("send_firmware: msleep 0x%x\n", chunksize & 0x7FFF);
+               //printf("send_firmware: msleep 0x%x\n", chunksize & 0x7FFF);
                usleep((chunksize & 0x7FFF) * 1000);
             }
             else if (((i + chunksize) > size) || ((i + chunksize) < i))
@@ -364,7 +364,7 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
             }
             else
             {
-               printf("send_firmware: %d-byte chunk\n", chunksize);
+               //printf("send_firmware: %d-byte chunk\n", chunksize);
                uint8_t chunk[64];
                chunk[0] = buf[i++];
                uint16_t remaining = chunksize - 1;
@@ -472,11 +472,11 @@ int xc3028::set_channel(const avb_channel &channel)
    int error = load_base_fw(base_flags);
    error = (error ? error : load_avb_fw(0, channel.video_format, channel.audio_format));
    load_scode_fw(0, 0);
-   if (!radio)
-   {
+   //if (!radio)
+   //{
       static const uint8_t tv_mode[] = {0x0, 0x0};
       error = (error ? error : m_device.write(tv_mode, sizeof(tv_mode)));
-   }
+   //}
    error = (error ? error : set_frequency(channel.frequency_hz));
    return error;
 }
