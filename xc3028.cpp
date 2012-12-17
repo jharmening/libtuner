@@ -520,13 +520,14 @@ void xc3028::stop(void) {}
 bool xc3028::is_locked(void)
 {
    static const uint8_t lock_reg[] = {0x0, 0x2};
-   uint8_t lock[2];
-   if (m_device.transact(lock_reg, sizeof(lock_reg), lock, sizeof(lock)) != 0)
+   uint16_t lock = 0;
+   if (m_device.transact(lock_reg, sizeof(lock_reg), (uint8_t*)&lock, sizeof(lock)) != 0)
    {
       return false;
    }
-   printf("xc3028: lock registers 0x%x, 0x%x\n", lock[0], lock[1]);
-   return ((lock[0] == 0) && (lock[1] == 1));
+   lock = be16toh(lock);
+   printf("xc3028: lock registers 0x%x\n", lock);
+   return ((lock != 0x0) && (lock != 0x2));
 }
 
 int xc3028::start(uint32_t timeout_ms)
