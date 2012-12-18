@@ -504,12 +504,10 @@ int xc3028::set_frequency(uint64_t frequency_hz)
    uint32_t divider = (frequency_hz + (XC3028_DIVIDER / 2)) / XC3028_DIVIDER;
    static const uint8_t freq_cmd[] = {0x80, 0x2, 0x0, 0x0};
    error = m_device.write(freq_cmd, sizeof(freq_cmd));
-   if (!error && (m_callback != NULL))
-   {
-      m_callback(XC3028_CLOCK_RESET, m_callback_context);
-   }
    usleep(10000);
    divider = htobe32(divider);
+   uint8_t *divbytes = (uint8_t*)(&divider);
+   printf("xc3028 divider bytes: 0x%x 0x%x 0x%x 0x%x\n", divbytes[0], divbytes[1], divbytes[2], divbytes[3]);
    error = (error ? error : m_device.write((uint8_t*)(&divider), sizeof(divider)));
    usleep(100000);
    return error;
