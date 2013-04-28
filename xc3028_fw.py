@@ -128,7 +128,8 @@ XC3028_SCFW_CHINA =          1 << 11
 XC3028_SCFW_F6MHZ =          1 << 12
 XC3028_SCFW_INPUT2 =         1 << 13
 
-header = {
+headers = {
+'2.7': {
    'version': 0x2700,
    'base': [
       {
@@ -614,13 +615,15 @@ header = {
       }
    ]
 }
+}
 
 def checkfw(rawfile, header):
    if (header['offset'] + header['size']) > os.path.getsize(rawfile):
       raise ValueError('header at offset %d extends beyond end of file' % header['offset'])
 
-def buildfw(rawfile, outfile):
+def buildfw(rawfile, outfile, version):
    print 'Generating annotated firmware %s from raw firmware %s...' % (outfile, rawfile)
+   header = headers[version]
    with open(rawfile, 'rb') as rawfw, open(outfile, 'wb') as fwfile:
       fwfile.write(struct.pack('<HHH', header['version'], XC3028_FW_TYPE_BASE, len(header['base'])))
       for base_fw in header['base']:
@@ -665,9 +668,10 @@ if __name__ == "__main__":
    parser.add_argument('-i', dest='infile', required=True)
    parser.add_argument('-o', dest='outfile', required=True)
    parser.add_argument('-e', dest='extract', action='store_true')
+   parser.add_argument('-v', dest='version', default = "2.7")
    args = parser.parse_args()
    if args.extract:
       extractfw(args.infile, args.outfile)
    else:
-      buildfw(args.infile, args.outfile)
+      buildfw(args.infile, args.outfile, args.version)
 
