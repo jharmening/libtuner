@@ -39,7 +39,7 @@ SRCS = tuner_device.h tuner_device.cpp \
 		 xc3028.h xc3028.cpp
 
 NO_PROFILE=
-LIB = tuner
+LIB = tuner_static
 SHLIB = tuner
 SHLIB_MAJOR = $(LIBTUNER_MAJOR)
 
