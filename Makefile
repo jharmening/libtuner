@@ -48,7 +48,7 @@ install: all
 	mkdir -p $(INSTALLDIR)/include/libtuner
 	mkdir -p $(DATADIR)
 	cp -R libtuner.so* $(INSTALLDIR)/lib/libtuner/
-	cp libtuner.a $(INSTALLDIR)/lib/libtuner/
+	cp libtuner_static.a $(INSTALLDIR)/lib/libtuner/
 	cp *.h $(INSTALLDIR)/include/libtuner/
 	cp -r firmware/* $(DATADIR)/
 
