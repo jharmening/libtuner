@@ -156,7 +156,6 @@ xc3028::~xc3028(void)
 void xc3028::reset(void)
 {
    static const uint8_t power_down[] = {0x80, 0x8, 0x0, 0x0};
-   printf("xc3028: powering down\n");
    m_device.write(power_down, sizeof(power_down));
    m_current_base = NULL;
 }
@@ -172,7 +171,6 @@ int xc3028::load_base_fw(uint16_t flags)
          if (m_current_base != &m_base_fws[i])
          {
             int error = 0;
-            printf("xc3028: Loading base firmware #%hd\n", i); 
             if (m_callback != NULL)
             {
                error = m_callback(XC3028_TUNER_RESET, m_callback_context);
@@ -240,7 +238,6 @@ int xc3028::load_avb_fw(uint16_t flags, avb_video_fmt_t video_fmt, avb_audio_fmt
          m_current_dvb = NULL;
          if (m_current_avb != &m_avb_fws[i])
          {
-            printf("xc3028: Loading AVB firmware #%hd\n", i); 
             int error = send_firmware(m_avb_fws[i].common, "AVB", i);
             if (!error)
             {
@@ -331,21 +328,18 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
       switch (chunksize)
       {
          case 0:
-            //printf("send_firmware: tuner reset\n");
             if (m_callback != NULL)
             {
                error = m_callback(XC3028_TUNER_RESET, m_callback_context);
             }
             break;
          case 0xFF00:
-            //printf("send_firmware: clock reset\n");
             if (m_callback != NULL)
             {
                error = m_callback(XC3028_CLOCK_RESET, m_callback_context);
             }
             break;
          case 0xFFFF:
-            printf("send_firmware: exit, bytes written = %d\n", i);
             return 0;
          default:
             if (chunksize > 0xFF00)
@@ -355,7 +349,6 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
             }
             else if (chunksize & 0x8000)
             {
-               //printf("send_firmware: msleep 0x%x\n", chunksize & 0x7FFF);
                usleep((chunksize & 0x7FFF) * 1000);
             }
             else if (((i + chunksize) > size) || ((i + chunksize) < i))
@@ -365,7 +358,6 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
             }
             else
             {
-               //printf("send_firmware: %d-byte chunk\n", chunksize);
                uint8_t chunk[64];
                chunk[0] = buf[i++];
                uint16_t remaining = chunksize - 1;
@@ -381,7 +373,6 @@ int xc3028::send_firmware(common_fw_header &header, const char *fwtypename, uint
             break;
       }
    }
-   printf("send_firmware: wrote %d bytes, status = %d\n", i, error);
    return error;
 }
 
@@ -506,8 +497,6 @@ int xc3028::set_frequency(uint64_t frequency_hz)
    error = m_device.write(freq_cmd, sizeof(freq_cmd));
    usleep(10000);
    divider = htobe32(divider);
-   uint8_t *divbytes = (uint8_t*)(&divider);
-   printf("xc3028 divider bytes: 0x%x 0x%x 0x%x 0x%x\n", divbytes[0], divbytes[1], divbytes[2], divbytes[3]);
    error = (error ? error : m_device.write((uint8_t*)(&divider), sizeof(divider)));
    usleep(100000);
    return error;
@@ -524,7 +513,6 @@ bool xc3028::is_locked(void)
       return false;
    }
    lock = be16toh(lock);
-   printf("xc3028: lock registers 0x%x\n", lock);
    return ((lock != 0x0) && (lock != 0x2));
 }
 
