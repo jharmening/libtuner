@@ -27,6 +27,7 @@
 
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fstream>
 #include "tuner_config.h"
 
