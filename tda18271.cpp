@@ -26,6 +26,7 @@
  */
 
 #include <sys/errno.h>
+#include <unistd.h>
 #include "tda18271.h"
 
 #define TABLE_SIZE(table) (sizeof(table) / sizeof(table[0]))

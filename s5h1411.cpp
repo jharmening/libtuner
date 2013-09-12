@@ -26,6 +26,7 @@
  */
 
 #include <sys/errno.h>
+#include <unistd.h>
 #include "s5h1411.h"
 
 using namespace std;

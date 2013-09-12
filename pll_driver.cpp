@@ -26,6 +26,7 @@
  */
 
 #include <sys/errno.h>
+#include <unistd.h>
 #include "pll_driver.h"
 
 pll_driver::pll_driver(

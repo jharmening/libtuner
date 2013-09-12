@@ -26,6 +26,7 @@
  */
 
 #include <sys/errno.h>
+#include <unistd.h>
 #include "cx22702.h"
 
 using namespace std;

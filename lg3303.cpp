@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/errno.h>
+#include <unistd.h>
 #include <math.h>
 #include "lg3303.h"
 

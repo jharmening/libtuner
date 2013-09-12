@@ -25,8 +25,9 @@
  *
  */
  
- #include <sys/errno.h>
- #include "tda8295.h"
+#include <sys/errno.h>
+#include <unistd.h>
+#include "tda8295.h"
  
 tda8295::tda8295(tuner_config &config, tuner_device &device, int &error)
    : tuner_driver(config, device),

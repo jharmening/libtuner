@@ -26,6 +26,7 @@
  */
 
 #include <sys/errno.h>
+#include <unistd.h>
 #include "tuner_firmware.h"
 #include "nxt2004.h"
 
