@@ -4,7 +4,7 @@ CXXFLAGS ?= -O2
 CXXFLAGS += -Wall
 
 INSTALLDIR ?= /usr/local
-DATADIR ?= $(PREFIX)/share/libtuner
+DATADIR ?= $(INSTALLDIR)/share/libtuner
 
 .if defined(DIAGNOSTIC)
 CXXFLAGS+= -g -D_DIAGNOSTIC
