@@ -36,6 +36,36 @@ using namespace std;
 #define WHITESPACE " \t"
 #define DELIMS WHITESPACE"="
 
+namespace libtuner_config
+{
+   static ostream& default_log(std::ostream *stream)
+   {
+      return ((stream == NULL) ? clog : *stream) << "[libtuner] ";
+   }
+
+   static ostream& default_err(std::ostream *stream)
+   {
+      return ((stream == NULL) ? cerr : *stream) << "[libtuner] ";
+   }
+
+   ostream *logstream = NULL;
+   ostream *errstream = NULL;
+   outfunc logfunc = default_log;
+   outfunc errfunc = default_err;
+
+   void configure_log(ostream *stream, outfunc func)
+   {
+      logstream = stream;
+      logfunc = func;
+   }
+
+   void configure_err(ostream *stream, outfunc func)
+   {
+      errstream = stream;
+      errfunc = func;
+   }
+}
+
 int tuner_config::load(istream &stream, char line_delim)
 {
    if (m_next != NULL)

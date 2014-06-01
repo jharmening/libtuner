@@ -34,8 +34,8 @@
 #define DIAGNOSTIC(stmt)
 #endif
 
-#define LIBTUNERERR (std::cerr << "[libtuner] ")
-#define LIBTUNERLOG (std::clog << "[libtuner] ")
+#define LIBTUNERERR libtuner_config::errfunc(libtuner_config::errstream)
+#define LIBTUNERLOG libtuner_config::logfunc(libtuner_config::logstream)
 
 #include <iostream>
 #include <iomanip>
@@ -46,6 +46,20 @@
 
 #define LIBTUNER_STORE_PATH_KEY "LIBTUNER_DATA_STORE"
 #define LIBTUNER_DOMAIN_KEY "LIBTUNER_DOMAIN"
+
+namespace libtuner_config
+{
+   typedef std::ostream& (*outfunc)(std::ostream*);
+
+   extern std::ostream *logstream;
+   extern std::ostream *errstream;
+   extern outfunc logfunc;
+   extern outfunc errfunc;
+
+   void configure_log(std::ostream *stream, outfunc func);
+   void configure_err(std::ostream *stream, outfunc func);
+
+}
 
 class tuner_config
 {
