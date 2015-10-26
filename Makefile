@@ -36,7 +36,11 @@ SRCS = tuner_device.h tuner_device.cpp \
        tda8295.h tda8295.cpp \
        tuv1236d.h tuv1236d.cpp \
        nxt2004.h nxt2004.cpp \
-		 xc3028.h xc3028.cpp
+       xc3028.h xc3028.cpp
+
+.if defined(LIBTUNER_ENABLE_IIC)
+SRCS += tuner_iic_device.h tuner_iic_device.cpp
+.endif
 
 NO_PROFILE=
 LIB = tuner_static
